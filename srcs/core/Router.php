@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../controllers/' . $controllerName . '.php';
-
 class Router {
 
 	// dictionnaire pour garder en mémoire toutes les routes du site

@@ -1,6 +1,6 @@
 <?php
 
-require_once 'session.php';
+require_once __DIR__ . '/Session.php';
 
 class Auth {
 
