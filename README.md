@@ -15,7 +15,7 @@
 ```bash
 git clone https://github.com/your-user/camagru.git
 cd camagru
-cp .env.example .env   # fill in your values ## NOT READY YET
+cp .env.example .env   # fill in your values
 mkdir -p srcs/uploads
 make up
 ```
