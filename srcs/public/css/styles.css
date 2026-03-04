@@ -1,0 +1,9 @@
+marquee {
+	color:#ff0;
+	font-weight:bold;
+	background:#000;
+	padding:0.3rem;
+	border-top:2px solid #ff00aa;
+	border-bottom:2px solid #ff00aa;
+	display: block;
+};
