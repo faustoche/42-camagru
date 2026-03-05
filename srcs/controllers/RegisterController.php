@@ -54,8 +54,8 @@ class RegisterController {
 		## Vérification que le mdp fait 8 characters
 		if (!empty($_POST['password'])) {
 			$password = checkInput($_POST['password']);
-			if (!preg_match('/[^A-Za-z0-9]+/', $password) || strlen($password) < 8)
-				$errors['invalid-password'] = "Invalid password: must be at least 8 characters";
+			if (preg_match('/[^A-Za-z0-9]+/', $password) || strlen($password) < 8)
+				$errors['invalid-password'] = "Invalid password";
 		} else {
 			$errors['password-required'] = "Password is required";
 		}
@@ -64,7 +64,17 @@ class RegisterController {
 			$this->showForm($errors);
 		} else {
 			$passwordHashed = password_hash($password, PASSWORD_ARGON2ID);
-			$user->saveUser($username, $email, $passwordHashed);
+			$randomToken = bin2hex(random_bytes('15'));
+			$user->saveUser($username, $email, $passwordHashed, $randomToken);
+
+			$appUrl = $_SERVER['HTTP_HOST'];
+
+			$confirmationPath = "http://" . $appUrl . "/confirm?token=" . $randomToken;
+			$emailSubject = "Welcome! Please, verify your account.";
+			$emailMessage = "Click on the link to verify your account: " . $confirmationPath;
+
+			mail($email, $emailSubject, $emailMessage);
+
 			header('Location: /');
 			exit();
 		}

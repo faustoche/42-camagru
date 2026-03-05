@@ -65,12 +65,12 @@ class Users {
 		}
 	}
 
-	public function saveUser(string $username, string $email, string $password) {
+	public function saveUser(string $username, string $email, string $password, string $confirmationToken) {
 		
 		## Insertion du user dans la table
-		$request = 'INSERT INTO users (username, email, password) VALUES (:username, :email, :password)';
+		$request = 'INSERT INTO users (username, email, password, confirmation_token) VALUES (:username, :email, :password, :confirmationToken)';
 
 		$statement = $this->pdoConnection->prepare($request);
-		$statement->execute([':username' => $username, ':email' => $email, ':password' => $password]);
+		$statement->execute([':username' => $username, ':email' => $email, ':password' => $password, ':confirmationToken' => $confirmationToken]);
 	}
 }
