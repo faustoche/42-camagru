@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/User.php';
 class RegisterController {
 
 	public function showForm(array $tab = []) {
+		Auth::requireGuest();
 		## Démarrage de la temporisation de sortie 
 		## Mise en pause de l'affichage
 		ob_start();
@@ -23,6 +24,8 @@ class RegisterController {
 	}
 
 	public function processRegistration() {
+
+		Auth::requireGuest();
 
 		$errors = [];
 

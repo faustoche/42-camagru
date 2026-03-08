@@ -6,6 +6,7 @@ require_once __DIR__ . '/../core/Session.php';
 class LoginController {
 
 	public function showLoginForm(array $tab = []) {
+		Auth::requireGuest();
 		ob_start();
 		require_once __DIR__ . '/../views/login.php';
 		$content = ob_get_clean();
@@ -14,6 +15,7 @@ class LoginController {
 
 	public function processLogin() {
 
+		Auth::requireGuest();
 		$user = new Users();
 		$errors = [];
 

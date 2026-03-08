@@ -21,6 +21,7 @@ $router->get('/reset', 'PasswordController', 'showResetForm');
 $router->post('/reset', 'PasswordController', 'processReset');
 $router->get('/login', 'LoginController', 'showLoginForm');
 $router->post('/login', 'LoginController', 'processLogin');
+$router->get('/logout', 'LogoutController', 'processLogout');
 
 ## Lancement du programme/site 
 $router->resolve();

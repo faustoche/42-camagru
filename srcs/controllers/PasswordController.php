@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/User.php';
 class PasswordController {
 	
 	public function processNewPassword() {
+		Auth::requireGuest();
 		$email = trim($_POST['email']);
 
 		$user = new Users();
@@ -30,6 +31,8 @@ class PasswordController {
 
 	public function showResetForm() {
 
+		Auth::requireGuest();
+
 		$user = new Users();
 
 		if (isset($_GET['token'])) {
@@ -51,7 +54,8 @@ class PasswordController {
 	}
 
 	public function processReset() {
-
+		
+		Auth::requireGuest();
 		$user = new Users();
 
 		if (isset($_POST['password']) && isset($_POST['token'])) {
