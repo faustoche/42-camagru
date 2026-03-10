@@ -6,11 +6,6 @@
                 <input type="text" placeholder="Find a sticker ...">
                 <button type="button" class="app-btn-small">OK</button>
             </div>
-            
-            <select class="app-select">
-                <option>Best rated</option>
-                <option>Newest</option>
-            </select>
 
             <form action="/studio/capture" method="POST" enctype="multipart/form-data" id="mainCaptureForm" class="app-sticker-form">
                 
@@ -27,14 +22,6 @@
                     <?php else: ?>
                         <p class="app-empty-text">No stickers.</p>
                     <?php endif; ?>
-                </div>
-
-                <div class="app-pagination">
-                    <button type="button" class="app-page-btn active">1</button>
-                    <button type="button" class="app-page-btn">2</button>
-                    <button type="button" class="app-page-btn">3</button>
-                    <button type="button" class="app-page-btn">4</button>
-                    <span>...</span>
                 </div>
         </aside>
 
@@ -80,9 +67,6 @@
                         <?php foreach ($userImages as $img): ?>
                             <div class="app-shot-item">
                                 <img src="/uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Shot">
-                                <div class="delete-form-placeholder">
-                                    <button type="button" class="btn-delete-shot" title="Delete this image">✏️</button>
-                                </div>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -102,6 +86,7 @@
 </div>
 
 <script>
+
     const video = document.getElementById('video');
     
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -236,6 +221,8 @@
         // Conversion en texte pour le PHP
         document.getElementById('stickers_data').value = JSON.stringify(stickersArray);
 
+        const gallery = document.querySelector('.app-shots-grid');
+        const empty_dropzone = document.querySelector('.empty-dropzone');
         // Envoi silencieux au serveur
         fetch('/studio/capture', {
             method: "POST",
@@ -245,6 +232,17 @@
         .then(data => {
             console.log("Serveur :", data);
             allStickers.forEach(box => box.remove());
+            
+            const newDiv = document.createElement("div");
+            const img = document.createElement("img");
+
+            img.src = "/uploads/" + data.fileName;
+            newDiv.appendChild(img);
+            newDiv.className = "app-shot-item";
+
+            if (empty_dropzone)
+                empty_dropzone.remove();
+            gallery.prepend(newDiv);
         })
         .catch(error => console.error("Erreur de requête :", error));
     });

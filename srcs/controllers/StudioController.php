@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . "/../models/User.php";
+
 class StudioController {
 
 	public function showStudio() {
@@ -10,6 +12,15 @@ class StudioController {
 
 		$stickers = array_filter($stickerDir, fn($elem) => str_ends_with($elem, '.png'));
 
+
+		$user = new Users();
+		$user_id = $_SESSION['user_id'];
+		$request = "SELECT filename FROM images WHERE user_id = :user_id ORDER BY created_at DESC";
+		$statement = $user->getConnection()->prepare($request);
+		$statement->execute([':user_id' => $user_id]);
+
+		$userImages = $statement->fetchAll(PDO::FETCH_ASSOC);
+
 		ob_start();
 		require_once __DIR__ . '/../views/studio.php';
 		$content = ob_get_clean();
@@ -19,6 +30,7 @@ class StudioController {
 	}
 
 	public function processCapture() {
+
 		Auth::requireLogin();
 
 		// On vérifie le nouveau champ de données (stickers_data)
@@ -36,7 +48,7 @@ class StudioController {
 			$cleanData = str_replace('data:image/png;base64,', '', $imageData);
 			$result = base64_decode($cleanData);
 			$imageName = uniqid('image') . ".png";
-			$imagePath = __DIR__ . '/../uploads/' . $imageName;
+			$imagePath = __DIR__ . '/../public/uploads/' . $imageName;
 
 			$baseImage = imagecreatefromstring($result);
 			
@@ -68,10 +80,20 @@ class StudioController {
 
 			// Sauvegarde finale sur le disque
 			$isSaved = imagepng($baseImage, $imagePath);
+
+			$user = new Users();
+			$user_id = $_SESSION['user_id'];
+
+			// Création d'une requête SQL pour lier l'image à l'user
+			$request = "INSERT INTO images (user_id, filename) VALUES (:user_id, :imageName)";
+
+			$statement = $user->getConnection()->prepare($request);
+			$statement->execute([':user_id' => $user_id, ':imageName' => $imageName]);
+
 			imagedestroy($baseImage);
 			
 			// Réponse propre au navigateur
-			$response = ['status' => 'success', 'saved' => $isSaved];
+			$response = ['status' => 'success', 'saved' => $isSaved, 'fileName' => $imageName];
 			header('Content-Type: application/json');
 			echo json_encode($response);
 			exit();

@@ -13,6 +13,8 @@ class Users {
 		$this->pdoConnection = $db->getConnection();
 	}
 
+	public function getConnection() { return $this->pdoConnection; }
+
 	public function isUsernameTaken(string $username) {
 		## where email = :email protége contre les injections SQL
 		## On sépare la requête des valeurs
