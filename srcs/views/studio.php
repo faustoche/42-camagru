@@ -74,11 +74,47 @@
                     <?php endif; ?>
                 </div>
             </div>
-            </form> 
+            <button type="button" id="button-manage-gallery">Manage my gallery</button>
+
         </aside>
 
     </div>
 </div>
+
+<dialog id="gallery-modal" style="margin: auto; padding: 20px; border-radius: 8px; border: none; max-width: 80vw;">
+    <h3 style="margin-top: 0;">My gallery</h3>
+
+
+    <div id="modal-grid-view" style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <?php if (!empty($userImages)): ?>
+            <?php foreach ($userImages as $img): ?>
+                <img src="/uploads/<?= htmlspecialchars($img['filename']) ?>" 
+                     class="gallery-thumbnail" 
+                     data-filename="<?= htmlspecialchars($img['filename']) ?>" 
+                     style="width: 120px; height: 90px; object-fit: cover; cursor: pointer; border-radius: 4px;">
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>No photos yet.</p>
+        <?php endif; ?>
+    </div>
+
+
+    <div id="modal-detail-view" style="display: none; text-align: center;">
+        <button id="back-button" class="app-btn-small" style="margin-bottom: 15px;">Back to the gallery</button>
+        <br>
+        <img id="detail-large-image" style="max-width: 100%; max-height: 50vh; border-radius: 8px;">
+        
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-publish" class="app-btn-small" style="background-color: #4CAF50;">Publish</button>
+            <button id="btn-share" class="app-btn-small" style="background-color: #1DA1F2;">Share</button>
+            <button id="btn-delete" class="app-btn-small" style="background-color: #ff4444;">Delete</button>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right;">
+        <button type="button" id="button-close-modal" class="app-btn-small">Close window</button>
+    </div>
+</dialog>
 
 <script>
 
@@ -93,6 +129,57 @@
             alert("Cannot access camera. Please autorize access in your navigator.");
         });
     
+
+        /////// MODALE D'OUVERTURE DE LA GALERIE 
+        const galleryModal = document.getElementById('gallery-modal');
+        const buttonManageGallery = document.getElementById('button-manage-gallery');
+        const buttonClose = document.getElementById('button-close-modal');
+
+        buttonManageGallery.addEventListener('click', function() {
+            galleryModal.showModal(); // On ouvre le <dialog>
+        });
+
+        buttonClose.addEventListener('click', function() {
+            galleryModal.close(); // On ferme le <dialog>
+            // On réinitialise l'affichage pour la prochaine ouverture
+            document.getElementById('modal-grid-view').style.display = 'flex';
+            document.getElementById('modal-detail-view').style.display = 'none';
+        });
+
+
+        ////////// AFFICHAGE DE LA GRILLE
+        const modalGridView = document.getElementById('modal-grid-view');
+        const modalDetailView = document.getElementById('modal-detail-view');
+        const detailLargeImage = document.getElementById('detail-large-image');
+        const backButton = document.getElementById('back-button');
+
+        // Qu'est-ce qu'on est en train de regarder actuellement?
+        let currentEditingImage = '';
+
+        // On attache un événement de clic à chaque miniature de la grille
+        const thumbnails = document.querySelectorAll('.gallery-thumbnail');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                // On lit l'adresse de l'image cliquée et son nom de fichier
+                const imageSrc = this.src;
+                currentEditingImage = this.getAttribute('data-filename');
+
+                // On met à jour la grande image
+                detailLargeImage.src = imageSrc;
+
+                // Bascule visuelle
+                modalGridView.style.display = 'none';
+                modalDetailView.style.display = 'block';
+            });
+        });
+
+        // Go back
+        backButton.addEventListener('click', function() {
+            modalDetailView.style.display = 'none';
+            modalGridView.style.display = 'flex';
+            currentEditingImage = ''; // On vide la mémoire
+        });
+
     const uploadedImage = document.getElementById('uploaded-image');
     const webcamButton = document.getElementById('button-webcam');
     const captureButton = document.querySelector('.app-btn-save');
@@ -307,6 +394,38 @@
                 if (empty_dropzone)
                     empty_dropzone.remove();
                 gallery.prepend(newDiv);
+
+                const newModalThumb = document.createElement("img");
+                newModalThumb.src = "/uploads/" + data.fileName;
+                newModalThumb.className = "gallery-thumbnail";
+                newModalThumb.setAttribute("data-filename", data.fileName);
+
+                newModalThumb.style.width = "120px";
+                newModalThumb.style.height = "90px";
+                newModalThumb.style.objectFit = "cover";
+                newModalThumb.style.cursor = "pointer";
+                newModalThumb.style.borderRadius = "4px";
+
+                newModalThumb.addEventListener('click', function() {
+                    const detailLargeImage = document.getElementById('detail-large-image');
+                    const modalGridView = document.getElementById('modal-grid-view');
+                    const modalDetailView = document.getElementById('modal-detail-view');
+                    
+                    detailLargeImage.src = this.src;
+                    currentEditingImage = this.getAttribute('data-filename');
+                    
+                    modalGridView.style.display = 'none';
+                    modalDetailView.style.display = 'block';
+                });
+
+                const modalGridView = document.getElementById('modal-grid-view');
+                const emptyModalText = modalGridView.querySelector('p'); // On cherche le <p> "No photos yet."
+                if (emptyModalText) {
+                    emptyModalText.remove();
+                }
+
+                // On insère la nouvelle miniature tout en haut de la grille
+                modalGridView.prepend(newModalThumb);
             })
             .catch(error => console.error("Request error :", error));
             
