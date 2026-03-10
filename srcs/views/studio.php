@@ -36,13 +36,13 @@
                 </div>
                 <div class="toolbar-group">
                     <button type="button" class="toolbar-tool disabled">🗑️<span>Remove</span></button>
-                    <button type="button" class="toolbar-tool disabled">⚙️<span>Settings</span></button>
                 </div>
             </div>
 
             <div class="app-canvas-area">
                 <div class="canvas-placeholder" style="position: relative;">
                     <video id="video" autoplay style="max-width: 100%; border-radius: 8px;"></video>
+                    <img id="uploaded-image" style="max-width: 100%; border-radius: 8px; display:none">
                     
                     <canvas id="canvas" style="display:none;"></canvas>
 
@@ -97,6 +97,24 @@
             console.error("Error: cannot access camera: ", error);
             alert("Cannot access camera. Please autorize access in your navigator.");
         });
+
+    const upload = document.querySelector('input[name="userfile"]');
+
+    upload.addEventListener('change', function() {
+        if (this.files[0]) {
+            const reader = new FileReader();
+            reader.readAsDataURL(this.files[0]);
+            reader.onload = () => {
+                const uploadedImage = document.getElementById('uploaded-image');
+                uploadedImage.src = reader.result;
+
+                // pour éviter de garder le bouton de la caméra allumé
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.style.display = 'none';
+                uploadedImage.style.display = 'block';
+            }
+        }
+    })
 
     const canvasPlaceholder = document.querySelector('.canvas-placeholder');
     const stickerItems = document.querySelectorAll('.app-sticker-item');
@@ -183,15 +201,30 @@
     captureButton.addEventListener('click', function(event) {
         event.preventDefault();
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageCaptured = document.getElementById('uploaded-image');
+        let activeElem;
+        let realWidth;
+        let realHeight;
+
+        if (imageCaptured.style.display === 'block') {
+            activeElem = imageCaptured;
+            realWidth = activeElem.naturalWidth;
+            realHeight = activeElem.naturalHeight;
+        } else {
+            activeElem = video;
+            realWidth = activeElem.videoWidth;
+            realHeight = activeElem.videoHeight;
+        }
+
+        canvas.width = realWidth;
+        canvas.height = realHeight;
+        context.drawImage(activeElem, 0, 0, realWidth, realHeight);
         hiddenInput.value = canvas.toDataURL('image/png');
 
         // Calculs des ratios
-        const videoRect = video.getBoundingClientRect();
-        const widthRatio = video.videoWidth / videoRect.width;
-        const heightRatio = video.videoHeight / videoRect.height;
+        const activeRect = activeElem.getBoundingClientRect();
+        const widthRatio = realWidth / activeRect.width;
+        const heightRatio = realHeight / activeRect.height;
         
         let stickersArray = [];
         const allStickers = document.querySelectorAll('.sticker-box');
@@ -206,8 +239,8 @@
             const boxRect = box.getBoundingClientRect();
 
             // Différence mathématique pure, indépendante du HTML autour
-            const exactDiffX = boxRect.left - videoRect.left;
-            const exactDiffY = boxRect.top - videoRect.top;
+            const exactDiffX = boxRect.left - activeRect.left;
+            const exactDiffY = boxRect.top - activeRect.top;
 
             stickersArray.push({
                 src: filename,

@@ -10,3 +10,5 @@ RUN apt-get update && apt-get install -y \
 COPY msmtprc /etc/msmtprc
 
 RUN echo "sendmail_path = /usr/bin/msmtp -t" > /usr/local/etc/php/conf.d/mail.ini
+
+RUN echo "upload_max_filesize = 10M\npost_max_size = 10M" > /usr/local/etc/php/conf.d/uploads.ini
