@@ -25,6 +25,7 @@ $router->get('/logout', 'LogoutController', 'processLogout');
 $router->get('/studio', 'StudioController', 'showStudio');
 $router->post('/studio/capture', 'StudioController', 'processCapture');
 $router->post('/studio/delete', 'StudioController', 'deleteCapture');
+$router->post('/studio/publish', 'StudioController', 'publishCapture');
 
 ## Lancement du programme/site 
 $router->resolve();

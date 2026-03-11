@@ -188,25 +188,66 @@
 		})
 	});
 
+
+	//? PUBLISH PICTURE
+
+	publishButton.addEventListener('click', function() {
+		if (!currentEditingImage)
+			return ;
+
+		if (confirm("Are you sure you want to publish your photo to the main gallery?")) {
+			fetch('/studio/publish', {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ filename: currentEditingImage })
+			})
+			.then(response => response.json())
+			.then (data => {
+				if (data.status === 'success') {
+	
+					galleryModal.close();
+					alert('Your photo is now public! Other users can like and comment.');
+				}
+			});
+
+		}
+	});
+
+
+
+	//? DELETE PICTURE
+
 	deleteButton.addEventListener('click', function() {
 		if (!currentEditingImage)
 			return ;
 
-		fetch('/studio/delete', {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ filename: currentEditingImage })
-		})
-		.then(response => response.json())
-		.then (data => {
-			if (data.status === 'success') {
-
-				galleryModal.close();
-				document.querySelector('.shot-thumbnail[data-filename="' + currentEditingImage + '"]').closest('.app-shot-item').remove();
-			}
-		});
+		if (confirm("Are you sure you want to delete this post?")) {
+			fetch('/studio/delete', {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ filename: currentEditingImage })
+			})
+			.then(response => {
+				if (!response.ok) throw new Error("Network error");
+				return response.json();
+			})
+			.then (data => {
+				if (data.status === 'success') {
+	
+					galleryModal.close();
+					const imageToTrash = document.querySelector('.shot-thumbnail[data-filename="' + currentEditingImage + '"]');
+                    if (imageToTrash) {
+                        imageToTrash.closest('.app-shot-item').remove();
+                    }
+					
+					currentEditingImage = '';
+				}
+			})
+			.catch (error => {
+				console.error("Error deleting picture: ", error);
+			});
+		}
 	});
-
 
 
 	 /////// MODALE D'OUVERTURE DE LA GALERIE 
