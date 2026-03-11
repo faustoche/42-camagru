@@ -102,4 +102,40 @@ class StudioController {
 		echo json_encode(['status' => 'error', 'message' => 'Missing data']);
 		exit();
 	}
+
+	public function deleteCapture() {
+		Auth::requireLogin();
+
+		$user = new Users();
+
+		// Lecture du json entrant
+		$input = json_decode(file_get_contents('php://input'), true);
+		$filename = $input['filename'];
+		if (empty($filename)) {
+			exit();
+		}
+
+		$request = "SELECT user_id FROM images WHERE filename = :filename";
+		$statement = $user->getConnection()->prepare($request);
+		$statement->execute([':filename' => $filename]);
+
+		$fetchData = $statement->fetch(PDO::FETCH_ASSOC);
+
+		if (!$fetchData || $fetchData['user_id'] != $_SESSION['user_id']) {
+			exit();
+		} else {
+			$imagePath = __DIR__ . '/../public/uploads/' . $filename;
+			if (file_exists($imagePath)) {
+				unlink($imagePath);
+			}
+
+			$deleteRequest = "DELETE FROM images WHERE filename = :filename";
+			$statement = $user->getConnection()->prepare($deleteRequest);
+			$statement->execute([':filename' => $filename]);
+
+			header('Content-Type: application/json');
+			echo json_encode(['status' => 'success']);
+			exit();
+		}
+	}
 }
