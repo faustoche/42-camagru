@@ -159,11 +159,6 @@ class StudioController {
 		if (!$fetchData || $fetchData['user_id'] != $_SESSION['user_id']) {
 			exit();
 		} else {
-			$imagePath = __DIR__ . '/../public/uploads/' . $filename;
-			if (file_exists($imagePath)) {
-				unlink($imagePath);
-			}
-
 			$publishRequest = "UPDATE images SET is_published = TRUE WHERE filename = :filename";
 			$statement = $user->getConnection()->prepare($publishRequest);
 			$statement->execute([':filename' => $filename]);
