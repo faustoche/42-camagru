@@ -28,6 +28,8 @@ $router->post('/studio/delete', 'StudioController', 'deleteCapture');
 $router->post('/studio/publish', 'StudioController', 'publishCapture');
 
 $router->post('/home/details', 'HomeController', 'getImageDetails');
+$router->post('/home/toggle-like', 'HomeController', 'toggleLike');
+$router->post('/home/add-comment', 'HomeController', 'addComment');
 
 
 ## Lancement du programme/site 

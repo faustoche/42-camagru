@@ -40,50 +40,103 @@ class HomeController {
 		require_once __DIR__ . '/../views/layout.php';
 	}
 
-	public function getImageDetails($filename) {
-
-		//? RÉCUPÉRATION DE FILENAME
-
+	public function getImageDetails() {
 		$input = json_decode(file_get_contents('php://input'), true);
 		$filename = $input['filename'];
+		if (!$filename) exit();
+
 		$user = new Users();
 		$db = $user->getConnection();
 
-
-		//? REQUEST POUR RÉCUPÉRER L'ID
-
-		$imageRequest = $db->prepare("SELECT id FROM images WHERE filename = :filename");
-		$imageRequest->execute([':filename' => $filename]);
-		$imageData = $imageRequest->fetch(PDO::FETCH_ASSOC);
+		// 1. Trouver l'ID de l'image
+		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
+		$req->execute([':filename' => $filename]);
+		$imageData = $req->fetch(PDO::FETCH_ASSOC);
+		if (!$imageData) exit();
 		$imageId = $imageData['id'];
 
-		//? REQUEST POUR COMPTER LE NOMBRE DE LIKES
+		// 2. Compter les likes
+		$reqLike = $db->prepare("SELECT COUNT(*) AS total FROM likes WHERE image_id = :image_id");
+		$reqLike->execute([':image_id' => $imageId]);
+		$likes = $reqLike->fetch(PDO::FETCH_ASSOC)['total'];
 
-		$likeRequest = $db->prepare("SELECT COUNT(*) AS total_likes FROM likes WHERE image_id = :image_id");
-		$likeRequest->execute([':image_id' => $imageId]);
-		$likesData = $likeRequest->fetch(PDO::FETCH_ASSOC);
-		$totalLikes = $likesData['total_likes'];
+		// 3. Savoir si l'utilisateur connecté a liké (pour afficher le bon coeur)
+		$userLiked = false;
+		if (isset($_SESSION['user_id'])) {
+			$reqCheck = $db->prepare("SELECT 1 FROM likes WHERE image_id = :image_id AND user_id = :user_id");
+			$reqCheck->execute([':image_id' => $imageId, ':user_id' => $_SESSION['user_id']]);
+			if ($reqCheck->fetch()) {
+				$userLiked = true;
+			}
+		}
 
-		//? REQUEST POUR RÉCUPÉRER LES COMMENTAIRES
+		// 4. Récupérer les commentaires
+		$reqCom = $db->prepare("SELECT comments.content, users.username FROM comments INNER JOIN users ON comments.user_id = users.id WHERE comments.image_id = :image_id ORDER BY comments.created_at ASC");
+		$reqCom->execute([':image_id' => $imageId]);
+		$comments = $reqCom->fetchAll(PDO::FETCH_ASSOC);
 
-		$commentRequest = $db->prepare("
-				SELECT comments.content, comments.created_at, users.username
-				FROM comments
-				INNER JOIN users ON comments.user_id = users.id
-				WHERE comments.image_id = :image_id
-				ORDER BY comments.created_at ASC
-		");
-
-		$commentRequest->execute([':image_id' => $imageId]);
-		$allComments = $commentRequest->fetchAll(PDO::FETCH_ASSOC);
-
-		//? ENVOIS DES 2 DANS MON JSON
-
+		header('Content-Type: application/json');
 		echo json_encode([
-			'likes' => $totalLikes,
-			'comments' => $allComments
+			'likes' => $likes, 
+			'comments' => $comments,
+			'user_liked' => $userLiked
 		]);
+		exit();
+	}
+
+	public function toggleLike() {
+		Auth::requireLogin();
+		$input = json_decode(file_get_contents('php://input'), true);
+		$filename = $input['filename'];
 		
+		$user = new Users();
+		$db = $user->getConnection();
+		$userId = $_SESSION['user_id'];
+
+		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
+		$req->execute([':filename' => $filename]);
+		$imageId = $req->fetch(PDO::FETCH_ASSOC)['id'];
+
+		$checkReq = $db->prepare("SELECT 1 FROM likes WHERE image_id = :image_id AND user_id = :user_id");
+		$checkReq->execute([':image_id' => $imageId, ':user_id' => $userId]);
+
+		if ($checkReq->fetch()) {
+			// Il y a un like, on le supprime
+			$del = $db->prepare("DELETE FROM likes WHERE image_id = :image_id AND user_id = :user_id");
+			$del->execute([':image_id' => $imageId, ':user_id' => $userId]);
+		} else {
+			// Pas de like, on l'ajoute
+			$ins = $db->prepare("INSERT INTO likes (user_id, image_id) VALUES (:user_id, :image_id)");
+			$ins->execute([':user_id' => $userId, ':image_id' => $imageId]);
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode(['status' => 'success']);
+		exit();
+	}
+
+	public function addComment() {
+		Auth::requireLogin();
+		$input = json_decode(file_get_contents('php://input'), true);
+		$filename = $input['filename'];
+		$content = htmlspecialchars($input['content']); // Sécurité de base
+		
+		$user = new Users();
+		$db = $user->getConnection();
+		
+		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
+		$req->execute([':filename' => $filename]);
+		$imageId = $req->fetch(PDO::FETCH_ASSOC)['id'];
+
+		$ins = $db->prepare("INSERT INTO comments (user_id, image_id, content) VALUES (:user_id, :image_id, :content)");
+		$ins->execute([
+			':user_id' => $_SESSION['user_id'],
+			':image_id' => $imageId,
+			':content' => $content
+		]);
+
+		header('Content-Type: application/json');
+		echo json_encode(['status' => 'success']);
 		exit();
 	}
 }
