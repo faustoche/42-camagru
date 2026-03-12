@@ -27,5 +27,8 @@ $router->post('/studio/capture', 'StudioController', 'processCapture');
 $router->post('/studio/delete', 'StudioController', 'deleteCapture');
 $router->post('/studio/publish', 'StudioController', 'publishCapture');
 
+$router->post('/home/details', 'HomeController', 'getImageDetails');
+
+
 ## Lancement du programme/site 
 $router->resolve();

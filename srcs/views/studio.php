@@ -82,7 +82,6 @@
 
 <dialog id="gallery-modal" style="margin: auto; padding: 20px; border-radius: 8px; border: none; max-width: 80vw;">
 	<h3 style="margin-top: 0;">My gallery</h3>
-
 	<div id="modal-detail-view" style="text-align: center;">
 		<br>
 		<button type="button" id="button-back"><</button>
@@ -258,9 +257,6 @@
 		galleryModal.close(); // On ferme le <dialog>
 	});
 
-
-	////////// AFFICHAGE DE LA GRILLE
-	const modalDetailView = document.getElementById('modal-detail-view');
 
 	// Qu'est-ce qu'on est en train de regarder actuellement?
 	let currentEditingImage = '';
