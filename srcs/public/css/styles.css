@@ -732,3 +732,13 @@ footer a:hover {
 	resize: both;
 	overflow: hidden;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   animation like
+   ═══════════════════════════════════════════════════════════════ */
+
+.pop-animation {
+	transform: scale(1.2);
+	transition: transform 0.2s ease;
+}
