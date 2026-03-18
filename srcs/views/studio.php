@@ -448,6 +448,12 @@
 			canvas.width = realWidth;
 			canvas.height = realHeight;
 			context.drawImage(activeElem, 0, 0, realWidth, realHeight);
+
+			const faceOverlay = document.getElementById('faceapi-overlay');
+			if (faceOverlay) {
+				context.drawImage(faceOverlay, 0, 0, realWidth, realHeight);
+			}
+
 			hiddenInput.value = canvas.toDataURL('image/png');
 	
 			// Calculs des ratios

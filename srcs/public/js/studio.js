@@ -22,6 +22,7 @@ videoElement.addEventListener("playing", () => {
     videoElement.height = videoElement.videoHeight;
 
     const canvas = faceapi.createCanvasFromMedia(videoElement);
+    canvas.id = 'faceapi-overlay';
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
@@ -64,7 +65,7 @@ videoElement.addEventListener("playing", () => {
 
                 resizedDetections.forEach(detection => {
                     const box = detection.detection.box;
-                    const filterWidth = box.width * 1.6;
+                    const filterWidth = box.width * 1.2;
                     const ratio = activeFilterImage.naturalHeight / activeFilterImage.naturalWidth;
                     const filterHeight = filterWidth * ratio;
                     const x = box.x - (filterWidth - box.width) / 2;
