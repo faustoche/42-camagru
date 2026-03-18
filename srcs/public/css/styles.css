@@ -61,7 +61,7 @@ header.main-header {
 }
 
 .logo span {
-    color: var(--green);
+    color: #FF00AA;
 }
 
 nav {
@@ -75,7 +75,7 @@ nav {
     background: var(--green);
     overflow: hidden;
     padding: 0.4rem 0;
-    border-top: 2px solid #9fc937; /* Vert légèrement plus foncé pour la bordure */
+    border-top: 2px solid #9fc937;
     border-bottom: 2px solid #9fc937;
 }
 .ticker-track {
@@ -86,7 +86,7 @@ nav {
     text-transform: uppercase;
     letter-spacing: 2px;
     font-size: 0.85rem;
-    color: var(--text); /* Texte sombre pour contraster avec le vert clair */
+    color: var(--text);
 }
 .ticker-track span { margin: 0 1.5rem; }
 @keyframes ticker {
@@ -392,12 +392,16 @@ footer a:hover {
 /* ── PANNEAUX ── */
 .app-left-panel, 
 .app-right-panel {
-    background: var(--surface);
-    border-radius: 12px;
+    width: 240px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     padding: 1rem;
+    background: var(--surface);
+    border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+    min-height: 0;
 }
 
 .app-left-panel {
@@ -405,11 +409,6 @@ footer a:hover {
     flex-shrink: 0;
 }
 
-.app-right-panel {
-    width: 240px;
-    flex-shrink: 0;
-    justify-content: space-between;
-}
 
 .app-center-panel {
     flex: 1;
@@ -435,11 +434,37 @@ footer a:hover {
 }
 
 .app-btn-small {
-    padding: 0 0.8rem;
+    padding: 12px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px; cursor: pointer;
 }
+
+.gallery-button {
+    padding: 10px;
+    background: #FF00AA;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 4px; cursor: pointer;
+}
+
+.gallery-button:hover {
+    background: #B0DB42;
+}
+
+.unpublish-button {
+    padding: 10px;
+    background: #B0DB42;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 4px; cursor: pointer;
+    display: none;
+}
+
+.unpublish-button:hover {
+    background: #FF00AA;
+}
+
 
 .app-select {
     width: 100%;
@@ -628,12 +653,25 @@ footer a:hover {
     text-align: center;
 }
 
+.right-panel-tools {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.shots-scroll-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .app-shots-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
-    overflow-y: auto;
-    max-height: 500px;
+    padding-bottom: 10px;
 }
 
 .app-shot-item {
@@ -784,4 +822,100 @@ footer a:hover {
     color: var(--text);
     box-shadow: 0 0 12px rgba(176, 219, 66, 0.4);
     transform: translateY(-1px);
+}
+/* ═══════════════════════════════════════════════════════════════
+   ONGLETS STUDIO 
+   ═══════════════════════════════════════════════════════════════ */
+.studio-tabs-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.tabs-header {
+    display: flex;
+    justify-content: center;
+    border-bottom: 2px solid var(--border);
+    gap: 4px;
+    padding-left: 10px;
+}
+
+.tab-button {
+    background: transparent;
+    border: 2px solid transparent;
+    border-bottom: none;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    font-weight: bold;
+    font-size: 0.85rem;
+    position: relative;
+    top: 2px;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: #e9ecef;
+}
+
+.tab-button.active {
+    background: var(--surface);
+    color: var(--pink);
+    border: 2px solid var(--border);
+    border-bottom: 2px solid var(--surface);
+    z-index: 2;
+}
+
+.tabs-content-wrapper {
+    border: 2px solid var(--border);
+    border-top: none;
+    background: var(--surface);
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    flex: 1;
+    min-height: 250px;
+    position: relative;
+    z-index: 1;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeInTab 0.3s ease;
+}
+
+@keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Style des éléments dans l'onglet Filtres */
+.app-filter-item {
+    cursor: pointer;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 10px;
+    border-radius: 4px;
+    transition: background 0.2s, border 0.2s;
+    border: 2px solid transparent;
+}
+
+.app-filter-item:hover {
+    background: #e0e0e0;
+    border: 2px solid var(--pink);
+}
+
+.app-filter-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
 }

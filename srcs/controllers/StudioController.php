@@ -12,10 +12,17 @@ class StudioController {
 
 		$stickers = array_filter($stickerDir, fn($elem) => str_ends_with($elem, '.png'));
 
+		$filterPath = __DIR__ . "/../public/filters";
+		$filters = [];
+		if (is_dir($filterPath)) {
+			$filterDir = scandir($filterPath);
+			$filters = array_filter($filterDir, fn($elem) => str_ends_with($elem, '.png'));
+		}
+
 
 		$user = new Users();
 		$user_id = $_SESSION['user_id'];
-		$request = "SELECT filename FROM images WHERE user_id = :user_id ORDER BY created_at DESC";
+		$request = "SELECT filename, is_published FROM images WHERE user_id = :user_id ORDER BY created_at DESC";
 		$statement = $user->getConnection()->prepare($request);
 		$statement->execute([':user_id' => $user_id]);
 
@@ -178,6 +185,40 @@ class StudioController {
 			exit();
 		} else {
 			$publishRequest = "UPDATE images SET is_published = TRUE WHERE filename = :filename";
+			$statement = $user->getConnection()->prepare($publishRequest);
+			$statement->execute([':filename' => $filename]);
+
+			header('Content-Type: application/json');
+			echo json_encode(['status' => 'success']);
+			exit();
+		}
+	}
+
+	public function unpublishCapture() {
+		Auth::requireLogin();
+
+		$user = new Users();
+		// Lecture du json entrant
+		$input = json_decode(file_get_contents('php://input'), true);
+		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
+		$filename = $input['filename'];
+		if (empty($filename)) {
+			exit();
+		}
+
+		$request = "SELECT user_id FROM images WHERE filename = :filename";
+		$statement = $user->getConnection()->prepare($request);
+		$statement->execute([':filename' => $filename]);
+
+		$fetchData = $statement->fetch(PDO::FETCH_ASSOC);
+
+		if (!$fetchData || $fetchData['user_id'] != $_SESSION['user_id']) {
+			exit();
+		} else {
+			$publishRequest = "UPDATE images SET is_published = FALSE WHERE filename = :filename";
 			$statement = $user->getConnection()->prepare($publishRequest);
 			$statement->execute([':filename' => $filename]);
 

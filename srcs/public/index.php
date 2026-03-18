@@ -29,6 +29,7 @@ $router->get('/studio', 'StudioController', 'showStudio');
 $router->post('/studio/capture', 'StudioController', 'processCapture');
 $router->post('/studio/delete', 'StudioController', 'deleteCapture');
 $router->post('/studio/publish', 'StudioController', 'publishCapture');
+$router->post('/studio/unpublish', 'StudioController', 'unpublishCapture');
 
 $router->post('/home/details', 'HomeController', 'getImageDetails');
 $router->post('/home/toggle-like', 'HomeController', 'toggleLike');

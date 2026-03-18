@@ -2,16 +2,45 @@ const MODEL_URI = "/vendor/face-api/models";
 const videoElement = document.getElementById('video');
 const videoContainer = document.querySelector('.canvas-placeholder');
 const activeFilterImage = new Image();
-activeFilterImage.src = '/stickers/dog_ears.png';
+activeFilterImage.src = ''; // ON le laisse à vide
 let isTracking = false;
+
+// Dictionnaire pour configuré les filtres
+const filtersConfig = {
+    'dog_ears.png': {
+        anchor: 'head',  // S'accroche sur le haut de la boîte du visage
+        widthRatio: 1.2, // 120% de la largeur du visage
+        offsetY: -0.45   // Remonte de 45% vers le haut
+    },
+    'cat_ears.png': {
+        anchor: 'head',
+        widthRatio: 1.2,
+        offsetY: -0.65
+    },
+    'cat_face.png': {
+        anchor: 'head',
+        widthRatio: 1.2,
+        offsetY: -0.45
+    },
+    'couronne.png': {
+        anchor: 'head',
+        widthRatio: 0.9,
+        offsetY: -1.5
+    },
+    'tiare.png': {
+        anchor: 'head',
+        widthRatio: 0.9,
+        offsetY: -1
+    }
+};
 
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URI),
     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URI)
 ]).then(() => {
-    console.log("Modèles IA prêts !");
+    console.log("Models are ready !");
 }).catch((err) => {
-    console.error("Erreur de chargement :", err);
+    console.error("Loading error :", err);
 });
 
 videoElement.addEventListener("playing", () => {
@@ -37,7 +66,6 @@ videoElement.addEventListener("playing", () => {
         scoreThreshold: 0.3
     });
 
-
     const displaySize = {
         width: videoElement.clientWidth,
         height: videoElement.clientHeight
@@ -53,6 +81,7 @@ videoElement.addEventListener("playing", () => {
         }
 
         try {
+            // On récupère les 68 points du visage
             const detections = await faceapi
                 .detectAllFaces(videoElement, detectorOptions)
                 .withFaceLandmarks();
@@ -60,20 +89,53 @@ videoElement.addEventListener("playing", () => {
             const offCtx = offscreenCanvas.getContext("2d");
             offCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
-            if (detections && detections.length > 0) {
+            if (detections && detections.length > 0 && activeFilterImage.src && activeFilterImage.complete && activeFilterImage.naturalWidth > 0) {
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                
+                // On prends le nom actuel de filtre
+                const srcParts = activeFilterImage.src.split('/');
+                const currentFilterName = srcParts[srcParts.length - 1];
+                
+                // On récupère la config du dictionnaire
+                const config = filtersConfig[currentFilterName] || { anchor: 'head', widthRatio: 1.0, offsetY: 0 };
 
                 resizedDetections.forEach(detection => {
                     const box = detection.detection.box;
-                    const filterWidth = box.width * 1.2;
+                    const landmarks = detection.landmarks;
+                    
+                    const filterWidth = box.width * config.widthRatio;
                     const ratio = activeFilterImage.naturalHeight / activeFilterImage.naturalWidth;
                     const filterHeight = filterWidth * ratio;
-                    const x = box.x - (filterWidth - box.width) / 2;
-                    const y = box.y - (filterHeight * 0.45);
+                    
+                    let x = 0;
+                    let y = 0;
 
-                    if (activeFilterImage.complete && activeFilterImage.naturalWidth > 0) {
-                        offCtx.drawImage(activeFilterImage, x, y, filterWidth, filterHeight);
+                    // Calcul des coordonnéés selon les points d'encrage du visage
+                    if (config.anchor === 'head') {
+                        // Oreil ou chapeau pour la visage
+                        x = box.x - (filterWidth - box.width) / 2;
+                        y = box.y + (filterHeight * config.offsetY);
+                    } 
+                    else if (config.anchor === 'nose') {
+                        // Nez
+                        const nose = landmarks.getNose();
+                        const noseTip = nose[3]; // 3 = environ le bout du nez
+                        
+                        x = noseTip.x - (filterWidth / 2);
+                        y = noseTip.y - (filterHeight / 2) + (filterHeight * config.offsetY);
+                    } 
+                    else if (config.anchor === 'mouth') {
+                        // La bouche pour centré
+                        const mouth = landmarks.getMouth();
+                        const mouthCenterX = mouth.reduce((sum, pt) => sum + pt.x, 0) / mouth.length;
+                        const mouthCenterY = mouth.reduce((sum, pt) => sum + pt.y, 0) / mouth.length;
+                        
+                        x = mouthCenterX - (filterWidth / 2);
+                        y = mouthCenterY - (filterHeight / 2) + (filterHeight * config.offsetY);
                     }
+
+                    // On dessine l'image finale
+                    offCtx.drawImage(activeFilterImage, x, y, filterWidth, filterHeight);
                 });
             }
 
@@ -85,7 +147,8 @@ videoElement.addEventListener("playing", () => {
             console.error("Erreur :", e);
         }
 
-        setTimeout(detectAndDraw, 50);
+        // Le tout dans une boucle pour éviter le trésaillement 
+        requestAnimationFrame(detectAndDraw);
     }
 
     detectAndDraw();

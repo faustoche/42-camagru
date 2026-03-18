@@ -26,6 +26,9 @@ clean:
 	@docker network rm $$(docker network ls -q) || true
 
 
+# UPLOADS=/srcs/public/uploads
+# [ -d $(UPLOADS) ] || mkdir -p $(UPLOADS)
+
 re: clean up
 
 fclean:	clean
