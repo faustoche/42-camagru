@@ -38,6 +38,8 @@ $router->post('/home/add-comment', 'HomeController', 'addComment');
 $router->get('/profile', 'ProfileController', 'showProfile');
 $router->post('/profile', 'ProfileController', 'updateProfile');
 
+$router->post('/home/load-more', 'HomeController', 'loadImageGallery');
+
 
 ## Lancement du programme/site 
 $router->resolve();

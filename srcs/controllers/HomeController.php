@@ -7,14 +7,14 @@ class HomeController {
 
 		$user = new Users();
 
-		$perPage = 5;
+		$perPage = 20;
 		$currentPage = max(1, (int)($_GET['page'] ?? 1));
 		$offset = ($currentPage - 1) * $perPage;
 
 		// Compte total
-		$countStmt = $user->getConnection()->query("SELECT COUNT(*) FROM images WHERE is_published = TRUE");
-		$totalImages = (int)$countStmt->fetchColumn();
-		$totalPages = max(1, (int)ceil($totalImages / $perPage));
+		// $countStmt = $user->getConnection()->query("SELECT COUNT(*) FROM images WHERE is_published = TRUE");
+		// $totalImages = (int)$countStmt->fetchColumn();
+		// $totalPages = max(1, (int)ceil($totalImages / $perPage));
 
 		$request = "SELECT images.id, images.filename, users.username, COUNT(likes.user_id) AS likes 
 					FROM images 
@@ -187,6 +187,36 @@ class HomeController {
 				mail($to, $subject, $message, $headers);
 			}
 		}
+		exit();
+	}
+
+	public function loadImageGallery() {
+		$input = json_decode(file_get_contents('php://input'), true);
+
+		// chargeement de 10 images par default pour le scroll -> est-ce que on passe a 20?
+		$perPage = 20;
+		$currentPage = max(1, (int)($input['page'] ?? 1));
+		$offset = ($currentPage - 1) * $perPage;
+
+		$user = new Users();
+
+		$request = "SELECT images.id, images.filename, users.username, COUNT(likes.user_id) AS likes 
+                FROM images 
+                INNER JOIN users ON images.user_id = users.id 
+                LEFT JOIN likes ON images.id = likes.image_id 
+                WHERE images.is_published = TRUE 
+                GROUP BY images.id 
+                ORDER BY images.created_at DESC
+                LIMIT :limit OFFSET :offset";
+		
+		$statement = $user->getConnection()->prepare($request);
+		$statement->bindValue(':limit', $perPage, PDO::PARAM_INT);
+		$statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+		$statement->execute();
+
+		$images = $statement->fetchAll(PDO::FETCH_ASSOC);
+		header('Content-Type: application/json');
+		echo json_encode(['images' => $images]);
 		exit();
 	}
 }

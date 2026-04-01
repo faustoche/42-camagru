@@ -25,18 +25,9 @@
 
 	</div>
 
-	<?php if ($totalPages > 1): ?>
-		<p class="pagination">
-			<?php if ($currentPage > 1): ?>
-				<a href="/?page=<?= $currentPage - 1 ?>">← Prev</a> &nbsp;
-			<?php endif; ?>
-			Page <?= $currentPage ?> / <?= $totalPages ?>
-			&nbsp;·&nbsp; <?= $totalImages ?> photos
-			<?php if ($currentPage < $totalPages): ?>
-				&nbsp; <a href="/?page=<?= $currentPage + 1 ?>">Next →</a>
-			<?php endif; ?>
-		</p>
-	<?php endif; ?>
+	<div id="scroll-anchor" style="height: 20px; text-align: center; padding: 20px; margin-top: 20px;">
+		<span id="loading-spinner" style="display: none; color: #8e8e8e; font-size: 0.9rem;">Charging more pictures... 📷</span>
+	</div>
 
 </main>
 <dialog id="gallery-modal" style="margin: auto; padding: 0; border-radius: 8px; border: none; max-width: 900px; width: 90vw; height: 60vh; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -296,5 +287,85 @@
 			}
 		}
 	})
+
+
+	//? PAGINATION INFINIE
+
+	let currentPage = 1;
+	let isFetching = false;
+	let hasMore = true;
+
+	const anchor = document.getElementById('scroll-anchor');
+	const grid = document.querySelector('.gallery-grid');
+	const loadingSpinner = document.getElementById('loading-spinner');
+
+	// On configure un truc pour observer la gallery
+	const observer = new IntersectionObserver((entries) => {
+		if (entries[0].isIntersecting && !isFetching && hasMore) {
+			loadMoreImages();
+		}
+	}, { 
+		rootMargin: "200px" // 200px avant le chargement
+	});
+
+	if (anchor) {
+		observer.observe(anchor);
+	}
+
+	function loadMoreImages() {
+		isFetching = true;
+		loadingSpinner.style.display = 'block';
+		currentPage++;
+
+		fetch('/home/load-more', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ page: currentPage })
+		})
+		.then(response => response.json())
+		.then(data => {
+			loadingSpinner.style.display = 'none';
+			
+			if (data.images.length === 0) {
+				hasMore = false;
+				return;
+			}
+
+			const emptyMsg = document.querySelector('.gallery-empty');
+			if (emptyMsg) {
+				emptyMsg.remove();
+			}
+
+			data.images.forEach(img => {
+				const item = document.createElement('div');
+				item.className = 'gallery-item';
+				item.innerHTML = `
+					<img class="home-thumbnail" data-filename="${img.filename}" style="cursor: pointer;" src="/uploads/${img.filename}" alt="Photo by ${img.username}">
+					<div class="overlay" style="pointer-events: none;">
+						<span style="font-size:0.8rem; color:#fff;">
+							★ ${img.likes} &nbsp; by ${img.username}
+						</span>
+					</div>
+				`;
+				grid.appendChild(item);
+
+				const newThumbnail = item.querySelector('.home-thumbnail');
+				newThumbnail.addEventListener('click', function() {
+					const imageSrc = this.src;
+					currentEditingImage = this.getAttribute('data-filename');
+					document.getElementById('detail-large-image').src = imageSrc;
+					document.getElementById('gallery-modal').showModal();
+					loadSocialData(currentEditingImage);
+				});
+			});
+
+			isFetching = false;
+		})
+		.catch(error => {
+			console.error("Error loading pictures :", error);
+			isFetching = false;
+			loadingSpinner.style.display = 'none';
+		});
+	}
 
 </script>
