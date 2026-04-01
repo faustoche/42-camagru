@@ -40,6 +40,8 @@ $router->post('/profile', 'ProfileController', 'updateProfile');
 
 $router->post('/home/load-more', 'HomeController', 'loadImageGallery');
 
+$router->get('/verify-notice', 'RegisterController', 'showVerifyNotice');
+$router->post('/resend-verification', 'RegisterController', 'resendVerificationEmail');
 
 ## Lancement du programme/site 
 $router->resolve();

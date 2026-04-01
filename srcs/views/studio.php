@@ -481,7 +481,11 @@
         }
     })
 
+    
     const canvasPlaceholder = document.querySelector('.canvas-placeholder');
+    // 1. On empêche visuellement tout débordement en dehors de la zone caméra
+    canvasPlaceholder.style.overflow = 'hidden'; 
+
     const stickerItems = document.querySelectorAll('.app-sticker-item');
 
     stickerItems.forEach(item => {
@@ -493,13 +497,17 @@
             newBox.style.position = 'absolute';
             newBox.style.top = '20px';
             newBox.style.left = '20px';
-            newBox.style.width = '120px';
-            newBox.style.height = '120px';
             newBox.style.border = '2px dashed #ff00aa';
-            newBox.style.resize = 'both';
             newBox.style.overflow = 'hidden';
             newBox.style.cursor = 'move';
             newBox.style.zIndex = '10';
+
+            // 1. CORRECTION DU SAUT VISUEL : On rend la boîte invisible le temps du chargement
+            newBox.style.opacity = '0';
+            newBox.style.transition = 'opacity 0.2s'; // Petite transition propre
+
+            newBox.style.maxWidth = (canvasPlaceholder.clientWidth - 20) + 'px';
+            newBox.style.maxHeight = (canvasPlaceholder.clientHeight - 20) + 'px';
 
             const newImg = document.createElement('img');
             newImg.src = '/stickers/' + stickerFile;
@@ -508,9 +516,20 @@
             newImg.style.pointerEvents = 'none';
 
             newImg.onload = function() {
-                const ratio = newImg.naturalHeight / newImg.naturalWidth;
+                // 2. CORRECTION DU RATIO : On impose les proportions de l'image source
+                const ratio = newImg.naturalWidth / newImg.naturalHeight;
+                newBox.style.aspectRatio = ratio.toString();
+                
+                // On fixe UNIQUEMENT la largeur. La hauteur suivra automatiquement grâce au ratio.
                 newBox.style.width = '120px';
-                newBox.style.height = Math.round(120 * ratio) + 'px';
+                newBox.style.height = 'auto';
+                
+                // 3. ASTUCE UI : On force l'utilisateur à redimensionner uniquement par la largeur
+                // Cela rend impossible l'écrasement ou la déformation du sticker
+                newBox.style.resize = 'horizontal';
+
+                // L'image est chargée et à la bonne taille, on l'affiche
+                newBox.style.opacity = '1';
             };
 
             newBox.appendChild(newImg);
@@ -521,6 +540,7 @@
             let offsetY = 0;
 
             newBox.addEventListener("mousedown", function(e) {
+                // On ignore le clic sur la poignée de redimensionnement (en bas à droite)
                 if (e.offsetX > newBox.clientWidth - 20 && e.offsetY > newBox.clientHeight - 20) {
                     return;
                 }
@@ -535,18 +555,24 @@
                     let newLeft = e.clientX - offsetX;
                     let newTop = e.clientY - offsetY;
 
-                    // Calcul des limites maximales par rapport au conteneur de la vidéo
-                    const maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
-                    const maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
+                    let maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
+                    let maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
 
-                    // Blocage des coordonnées pour ne pas déborder (0 = bord haut/gauche)
-                    if (newLeft < 0) newLeft = 0;
-                    if (newTop < 0) newTop = 0;
-                    if (newLeft > maxLeft) newLeft = maxLeft;
-                    if (newTop > maxTop) newTop = maxTop;
+                    let minLeft = maxLeft < 0 ? maxLeft : 0;
+                    let realMaxLeft = maxLeft < 0 ? 0 : maxLeft;
+                    let minTop = maxTop < 0 ? maxTop : 0;
+                    let realMaxTop = maxTop < 0 ? 0 : maxTop;
+
+                    if (newLeft < minLeft) newLeft = minLeft;
+                    if (newTop < minTop) newTop = minTop;
+                    if (newLeft > realMaxLeft) newLeft = realMaxLeft;
+                    if (newTop > realMaxTop) newTop = realMaxTop;
 
                     newBox.style.left = newLeft + 'px';
                     newBox.style.top = newTop + 'px';
+
+                    newBox.style.maxWidth = (canvasPlaceholder.clientWidth - newLeft) + 'px';
+                    newBox.style.maxHeight = (canvasPlaceholder.clientHeight - newTop) + 'px';
                 }
             });
 
@@ -555,7 +581,7 @@
                 newBox.style.cursor = 'move';
             });
 
-            captureButton.disabled = false;
+            document.querySelector('.app-btn-save').disabled = false;
         });
     });
 
