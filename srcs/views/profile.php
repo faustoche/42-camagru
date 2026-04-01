@@ -3,6 +3,24 @@
 
 		<h1 style="text-align: center; padding-bottom: 20px;">My profile</h1>
 
+		<?php if (isset($_GET['error'])): ?>
+
+			<div style="color: #d9534f; background-color: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+				<?php
+					if ($_GET['error'] === 'username_taken') {
+						echo "This username is already taken. Please choose another one.";
+					} elseif ($_GET['error'] === 'email_taken') {
+						echo "This email is already associated with an account.";
+					} elseif ($_GET['error'] === 'invalid_email') {
+						echo "The email format is invalid.";
+					} elseif ($_GET['error'] === 'weak_password') {
+						echo "Your password must contain at least 8 characters, including a letter and a number.";
+					} else {
+						echo "An error occurred. Please try again.";
+					}
+				?>
+			</div>
+		<?php endif; ?>
 		<form action="/profile" method="POST">
 			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 

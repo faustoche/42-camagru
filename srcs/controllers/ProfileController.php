@@ -54,6 +54,13 @@ class ProfileController {
 				exit();
 			}
 
+			$stmtUser = $user->getConnection()->prepare("SELECT id FROM users WHERE username = :username AND id != :user_id");
+			$stmtUser->execute([':username' => $username, ':user_id' => $user_id]);
+			if ($stmtUser->fetch()) {
+				header('Location: /profile?error=username_taken');
+				exit();
+			}
+
 			$request = "UPDATE users SET username = :username, email = :email, email_notifications = :email_notifications WHERE id = :user_id";
 			$statement = $user->getConnection()->prepare($request);
 			$statement->execute([

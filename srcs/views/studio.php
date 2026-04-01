@@ -175,8 +175,16 @@
             const detailLargeImage = document.getElementById('detail-large-image');
             detailLargeImage.src = target.src;
             currentEditingImage = target.getAttribute('data-filename');
-        }
 
+            const isPublished = target.getAttribute('data-published');
+            if (isPublished === '1') {
+                publishButton.style.display = 'none';
+                unpublishButton.style.display = 'inline-block';
+            } else {
+                publishButton.style.display = 'inline-block';
+                unpublishButton.style.display = 'none';
+            }
+        }
     });
     
     buttonNextModal.addEventListener('click', function() {
@@ -189,6 +197,15 @@
             const detailLargeImage = document.getElementById('detail-large-image');
             detailLargeImage.src = target.src;
             currentEditingImage = target.getAttribute('data-filename');
+
+            const isPublished = target.getAttribute('data-published');
+            if (isPublished === '1') {
+                publishButton.style.display = 'none';
+                unpublishButton.style.display = 'inline-block';
+            } else {
+                publishButton.style.display = 'inline-block';
+                unpublishButton.style.display = 'none';
+            }
         }
     });
 

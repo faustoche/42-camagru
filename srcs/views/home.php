@@ -146,13 +146,24 @@
 		const isLiked = this.src.includes('heart_full');
 		let countElem = document.getElementById('like-count-text');
 		let currentCount = parseInt(countElem.textContent);
+		let newLikeCount;
 
 		if (isLiked) {
 			this.src = '/assets/heart.png';
+			newLikeCount = currentCount - 1;
 			countElem.textContent = (currentCount - 1) + ' likes';
 		} else {
 			this.src = '/assets/heart_full.png';
+			newLikeCount = currentCount + 1;
 			countElem.textContent = (currentCount + 1) + ' likes';
+		}
+
+		const targetThumb = document.querySelector(`.home-thumbnail[data-filename="${currentEditingImage}"]`);
+		if (targetThumb) {
+			const overlaySpan = targetThumb.nextElementSibling.querySelector('span');
+			if (overlaySpan) {
+				overlaySpan.innerHTML = overlaySpan.innerHTML.replace(/★\s*\d+/, `★ ${newLikeCount}`)
+			}
 		}
 
 		this.classList.add('pop-animation');
