@@ -15,11 +15,41 @@
 
                 <div class="tabs-content-wrapper">
                     <div id="stickers-tab" class="tab-content active">
+                        <?php
+                        $allStickersPaths = glob(__DIR__ . '/../public/stickers/*/*.png') ?: [];
+                        $categories = [];
+                        $stickerElements = [];
+                        
+                        foreach ($allStickersPaths as $path) {
+                            $filename = basename($path);
+                            $category = basename(dirname($path));
+                            
+                            if (!in_array($category, $categories)) {
+                                $categories[] = $category;
+                            }
+                            
+                            $stickerElements[] = [
+                                'file' => $category . '/' . $filename,
+                                'category' => $category
+                            ];
+                        }
+                        ?>
+                        
+                        <div class="sticker-filter-container" style="margin-bottom: 15px; text-align: center;">
+                            <label for="sticker-category" style="font-weight: bold; font-size: 0.9rem;">Category : </label>
+                            <select id="sticker-category" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #dbdbdb;">
+                                <option value="all">All</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= htmlspecialchars($cat) ?>"><?= ucfirst(htmlspecialchars($cat)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
                         <div class="app-sticker-grid">
-                            <?php if (!empty($stickers)): ?>
-                                <?php foreach ($stickers as $sticker): ?>
-                                    <div class="app-sticker-item" data-sticker="<?= htmlspecialchars($sticker) ?>">
-                                        <img src="/stickers/<?= htmlspecialchars($sticker) ?>" alt="Sticker">
+                            <?php if (!empty($stickerElements)): ?>
+                                <?php foreach ($stickerElements as $sticker): ?>
+                                    <div class="app-sticker-item" data-sticker="<?= htmlspecialchars($sticker['file']) ?>" data-category="<?= htmlspecialchars($sticker['category']) ?>">
+                                        <img src="/stickers/<?= htmlspecialchars($sticker['file']) ?>" alt="Sticker">
                                     </div>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -481,10 +511,8 @@
         }
     })
 
-    
     const canvasPlaceholder = document.querySelector('.canvas-placeholder');
-    // 1. On empêche visuellement tout débordement en dehors de la zone caméra
-    canvasPlaceholder.style.overflow = 'hidden'; 
+    canvasPlaceholder.style.overflow = 'hidden';
 
     const stickerItems = document.querySelectorAll('.app-sticker-item');
 
@@ -502,9 +530,8 @@
             newBox.style.cursor = 'move';
             newBox.style.zIndex = '10';
 
-            // 1. CORRECTION DU SAUT VISUEL : On rend la boîte invisible le temps du chargement
             newBox.style.opacity = '0';
-            newBox.style.transition = 'opacity 0.2s'; // Petite transition propre
+            newBox.style.transition = 'opacity 0.2s';
 
             newBox.style.maxWidth = (canvasPlaceholder.clientWidth - 20) + 'px';
             newBox.style.maxHeight = (canvasPlaceholder.clientHeight - 20) + 'px';
@@ -516,19 +543,14 @@
             newImg.style.pointerEvents = 'none';
 
             newImg.onload = function() {
-                // 2. CORRECTION DU RATIO : On impose les proportions de l'image source
                 const ratio = newImg.naturalWidth / newImg.naturalHeight;
                 newBox.style.aspectRatio = ratio.toString();
                 
-                // On fixe UNIQUEMENT la largeur. La hauteur suivra automatiquement grâce au ratio.
                 newBox.style.width = '120px';
                 newBox.style.height = 'auto';
                 
-                // 3. ASTUCE UI : On force l'utilisateur à redimensionner uniquement par la largeur
-                // Cela rend impossible l'écrasement ou la déformation du sticker
                 newBox.style.resize = 'horizontal';
 
-                // L'image est chargée et à la bonne taille, on l'affiche
                 newBox.style.opacity = '1';
             };
 
@@ -540,7 +562,6 @@
             let offsetY = 0;
 
             newBox.addEventListener("mousedown", function(e) {
-                // On ignore le clic sur la poignée de redimensionnement (en bas à droite)
                 if (e.offsetX > newBox.clientWidth - 20 && e.offsetY > newBox.clientHeight - 20) {
                     return;
                 }
@@ -555,6 +576,7 @@
                     let newLeft = e.clientX - offsetX;
                     let newTop = e.clientY - offsetY;
 
+                    // Calcul des limites maximales par rapport au conteneur de la vidéo
                     let maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
                     let maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
 
@@ -563,6 +585,7 @@
                     let minTop = maxTop < 0 ? maxTop : 0;
                     let realMaxTop = maxTop < 0 ? 0 : maxTop;
 
+                    // Blocage des coordonnées pour ne pas déborder (0 = bord haut/gauche)
                     if (newLeft < minLeft) newLeft = minLeft;
                     if (newTop < minTop) newTop = minTop;
                     if (newLeft > realMaxLeft) newLeft = realMaxLeft;
@@ -581,7 +604,7 @@
                 newBox.style.cursor = 'move';
             });
 
-            document.querySelector('.app-btn-save').disabled = false;
+            captureButton.disabled = false;
         });
     });
 
@@ -741,6 +764,22 @@
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
     }
+
+    document.getElementById('sticker-category').addEventListener('change', function() {
+        const selectedCategory = this.value;
+        const allStickerItems = document.querySelectorAll('.app-sticker-item');
+
+        allStickerItems.forEach(item => {
+            const itemCategory = item.getAttribute('data-category');
+            
+            if (selectedCategory === 'all' || itemCategory === selectedCategory) {
+                item.style.display = 'inline-block'; 
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
 // ==========================================
 // GESTION DES FILTRES (Liée à face-api.js)
 // ==========================================
