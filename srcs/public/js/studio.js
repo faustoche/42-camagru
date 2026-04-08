@@ -10,7 +10,7 @@ const filtersConfig = {
     'dog_ears.png': {
         anchor: 'head',  // S'accroche sur le haut de la boîte du visage
         widthRatio: 1.2, // 120% de la largeur du visage
-        offsetY: -0.45   // Remonte de 45% vers le haut
+        offsetY: -0.4   // Remonte de 45% vers le haut
     },
     'cat_ears.png': {
         anchor: 'head',
@@ -19,7 +19,7 @@ const filtersConfig = {
     },
     'cat_face.png': {
         anchor: 'head',
-        widthRatio: 1.2,
+        widthRatio: 1.4,
         offsetY: -0.45
     },
     'couronne.png': {
@@ -31,7 +31,59 @@ const filtersConfig = {
         anchor: 'head',
         widthRatio: 0.9,
         offsetY: -1
-    }
+    },
+    'shrek_ears.png': {
+        anchor: 'head',
+        widthRatio: 1.2,
+        offsetY: -0.7
+    },
+    'crown.png': {
+        anchor: 'head',
+        widthRatio: 1.3,
+        offsetY: -0.7
+    },
+    'pink_hair.png': {
+        anchor: 'head',
+        widthRatio: 1.3,
+        offsetY: -0.4
+    },
+    'dalmatien.png': {
+        anchor: 'head',
+        widthRatio: 1.3,
+        offsetY: -0.2
+    },
+    'raccoon.png': {
+        anchor: 'head',
+        widthRatio: 0.9,
+        offsetY: -0.3
+    },
+    'rainbow.png': {
+        anchor: 'head',
+        widthRatio: 0.8,
+        offsetY: 0.2
+    },
+    'hello_kitty.png': {
+        anchor: 'head',
+        widthRatio: 1.8,
+        offsetY: -0.25
+    },
+    'labubu.png': {
+        anchor: 'head',
+        widthRatio: 1.7,
+        offsetY: -0.3
+    },
+
+    'cute.png': {
+        anchor: 'head',
+        widthRatio: 0.7,
+        offsetY: 0.1
+    },
+    'shy.png': {
+        anchor: 'head',
+        widthRatio: 0.7, 
+        offsetY: 0.6
+    },
+
 };
 
 Promise.all([

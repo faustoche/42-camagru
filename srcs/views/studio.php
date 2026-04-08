@@ -664,8 +664,8 @@
             // Analyse de chaque sticker présent sur la vidéo
             allStickers.forEach(box => {
                 const img = box.querySelector('img');
-                const srcParts = img.src.split('/');
-                const filename = srcParts[srcParts.length - 1];
+                const imgUrl = new URL(img.src);
+                const filename = decodeURIComponent(imgUrl.pathname.split('/stickers/')[1]);
     
                 // On prend les mesures EXACTES de la boîte sur l'écran physique
                 const boxRect = box.getBoundingClientRect();

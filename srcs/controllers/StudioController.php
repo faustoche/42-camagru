@@ -75,7 +75,8 @@ class StudioController {
 			if (is_array($stickers)) {
 				foreach ($stickers as $sticker) {
 					// Par sécurité, on extrait uniquement le nom final du fichier avec basename()
-					$stickerPath = __DIR__ . '/../public/stickers/' . basename($sticker['src']);
+					$safeRelativePath = str_replace(['../', '..\\'], '', $sticker['src']);
+                    $stickerPath = __DIR__ . '/../public/stickers/' . $safeRelativePath;
 					
 					if (file_exists($stickerPath)) {
 						$stickerImage = imagecreatefrompng($stickerPath);
