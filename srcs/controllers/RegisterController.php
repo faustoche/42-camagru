@@ -81,7 +81,8 @@ class RegisterController {
 
 			mail($email, $emailSubject, $emailMessage);
 
-			header('Location: /login');
+			$_SESSION['pending_email'] = $email;
+			header('Location: /verify-notice');
 			exit();
 		}
 	}
@@ -107,6 +108,56 @@ class RegisterController {
 		} else {
 			header('Location: /');
 		}
+		exit();
+	}
+
+	public function showVerifyNotice() {
+		// Si la personne arrive ici sans être passée par l'inscription, on la renvoie au login
+		if (!isset($_SESSION['pending_email'])) {
+			header('Location: /login');
+			exit();
+		}
+
+		$email = $_SESSION['pending_email'];
+
+		ob_start();
+		require_once __DIR__ . '/../views/verify_notice.php';
+		$content = ob_get_clean();
+		require_once __DIR__ . '/../views/layout.php';
+	}
+
+	public function resendVerificationEmail() {
+		if (!isset($_SESSION['pending_email'])) {
+			echo json_encode(['status' => 'error', 'message' => 'Session expired. Please register again or log in.']);
+			exit();
+		}
+
+		$email = $_SESSION['pending_email'];
+		$user = new Users();
+		$db = $user->getConnection();
+
+		$req = $db->prepare("SELECT confirmation_token, confirmed FROM users WHERE email = :email");
+		$req->execute([':email' => $email]);
+		$userData = $req->fetch(PDO::FETCH_ASSOC);
+
+		if ($userData && $userData['confirmed'] == 0) {
+			$token = $userData['confirmation_token'];
+			
+			$appUrl = $_SERVER['HTTP_HOST'];
+			$confirmationPath = "http://" . $appUrl . "/confirm?token=" . $token;
+			
+			$emailSubject = "Welcome! Please, verify your account.";
+			$emailMessage = "Click on the link to verify your account: " . $confirmationPath;
+
+			mail($email, $emailSubject, $emailMessage);
+
+			header('Content-Type: application/json');
+			echo json_encode(['status' => 'success']);
+			exit();
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode(['status' => 'error', 'message' => 'Account already verified or not found.']);
 		exit();
 	}
 }

@@ -15,11 +15,41 @@
 
                 <div class="tabs-content-wrapper">
                     <div id="stickers-tab" class="tab-content active">
+                        <?php
+                        $allStickersPaths = glob(__DIR__ . '/../public/stickers/*/*.png') ?: [];
+                        $categories = [];
+                        $stickerElements = [];
+                        
+                        foreach ($allStickersPaths as $path) {
+                            $filename = basename($path);
+                            $category = basename(dirname($path));
+                            
+                            if (!in_array($category, $categories)) {
+                                $categories[] = $category;
+                            }
+                            
+                            $stickerElements[] = [
+                                'file' => $category . '/' . $filename,
+                                'category' => $category
+                            ];
+                        }
+                        ?>
+                        
+                        <div class="sticker-filter-container" style="margin-bottom: 15px; text-align: center;">
+                            <label for="sticker-category" style="font-weight: bold; font-size: 0.9rem;">Category : </label>
+                            <select id="sticker-category" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #dbdbdb;">
+                                <option value="all">All</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?= htmlspecialchars($cat) ?>"><?= ucfirst(htmlspecialchars($cat)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
                         <div class="app-sticker-grid">
-                            <?php if (!empty($stickers)): ?>
-                                <?php foreach ($stickers as $sticker): ?>
-                                    <div class="app-sticker-item" data-sticker="<?= htmlspecialchars($sticker) ?>">
-                                        <img src="/stickers/<?= htmlspecialchars($sticker) ?>" alt="Sticker">
+                            <?php if (!empty($stickerElements)): ?>
+                                <?php foreach ($stickerElements as $sticker): ?>
+                                    <div class="app-sticker-item" data-sticker="<?= htmlspecialchars($sticker['file']) ?>" data-category="<?= htmlspecialchars($sticker['category']) ?>">
+                                        <img src="/stickers/<?= htmlspecialchars($sticker['file']) ?>" alt="Sticker">
                                     </div>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -482,6 +512,8 @@
     })
 
     const canvasPlaceholder = document.querySelector('.canvas-placeholder');
+    canvasPlaceholder.style.overflow = 'hidden';
+
     const stickerItems = document.querySelectorAll('.app-sticker-item');
 
     stickerItems.forEach(item => {
@@ -493,13 +525,16 @@
             newBox.style.position = 'absolute';
             newBox.style.top = '20px';
             newBox.style.left = '20px';
-            newBox.style.width = '120px';
-            newBox.style.height = '120px';
             newBox.style.border = '2px dashed #ff00aa';
-            newBox.style.resize = 'both';
             newBox.style.overflow = 'hidden';
             newBox.style.cursor = 'move';
             newBox.style.zIndex = '10';
+
+            newBox.style.opacity = '0';
+            newBox.style.transition = 'opacity 0.2s';
+
+            newBox.style.maxWidth = (canvasPlaceholder.clientWidth - 20) + 'px';
+            newBox.style.maxHeight = (canvasPlaceholder.clientHeight - 20) + 'px';
 
             const newImg = document.createElement('img');
             newImg.src = '/stickers/' + stickerFile;
@@ -508,9 +543,15 @@
             newImg.style.pointerEvents = 'none';
 
             newImg.onload = function() {
-                const ratio = newImg.naturalHeight / newImg.naturalWidth;
+                const ratio = newImg.naturalWidth / newImg.naturalHeight;
+                newBox.style.aspectRatio = ratio.toString();
+                
                 newBox.style.width = '120px';
-                newBox.style.height = Math.round(120 * ratio) + 'px';
+                newBox.style.height = 'auto';
+                
+                newBox.style.resize = 'horizontal';
+
+                newBox.style.opacity = '1';
             };
 
             newBox.appendChild(newImg);
@@ -536,17 +577,25 @@
                     let newTop = e.clientY - offsetY;
 
                     // Calcul des limites maximales par rapport au conteneur de la vidéo
-                    const maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
-                    const maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
+                    let maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
+                    let maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
+
+                    let minLeft = maxLeft < 0 ? maxLeft : 0;
+                    let realMaxLeft = maxLeft < 0 ? 0 : maxLeft;
+                    let minTop = maxTop < 0 ? maxTop : 0;
+                    let realMaxTop = maxTop < 0 ? 0 : maxTop;
 
                     // Blocage des coordonnées pour ne pas déborder (0 = bord haut/gauche)
-                    if (newLeft < 0) newLeft = 0;
-                    if (newTop < 0) newTop = 0;
-                    if (newLeft > maxLeft) newLeft = maxLeft;
-                    if (newTop > maxTop) newTop = maxTop;
+                    if (newLeft < minLeft) newLeft = minLeft;
+                    if (newTop < minTop) newTop = minTop;
+                    if (newLeft > realMaxLeft) newLeft = realMaxLeft;
+                    if (newTop > realMaxTop) newTop = realMaxTop;
 
                     newBox.style.left = newLeft + 'px';
                     newBox.style.top = newTop + 'px';
+
+                    newBox.style.maxWidth = (canvasPlaceholder.clientWidth - newLeft) + 'px';
+                    newBox.style.maxHeight = (canvasPlaceholder.clientHeight - newTop) + 'px';
                 }
             });
 
@@ -715,6 +764,22 @@
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
     }
+
+    document.getElementById('sticker-category').addEventListener('change', function() {
+        const selectedCategory = this.value;
+        const allStickerItems = document.querySelectorAll('.app-sticker-item');
+
+        allStickerItems.forEach(item => {
+            const itemCategory = item.getAttribute('data-category');
+            
+            if (selectedCategory === 'all' || itemCategory === selectedCategory) {
+                item.style.display = 'inline-block'; 
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
 // ==========================================
 // GESTION DES FILTRES (Liée à face-api.js)
 // ==========================================
