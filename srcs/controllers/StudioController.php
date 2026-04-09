@@ -81,6 +81,25 @@ class StudioController {
 					if (file_exists($stickerPath)) {
 						$stickerImage = imagecreatefrompng($stickerPath);
 						
+						$angle = isset($sticker['angle']) ? floatval($sticker['angle']) : 0;
+                        
+                        if ($angle != 0) {
+                            // Création d'une couleur transparente pour combler les "vides" créés par la rotation
+                            $transparent = imagecolorallocatealpha($stickerImage, 0, 0, 0, 127);
+                            
+                            // Rotation de l'image (l'angle est inversé pour correspondre au CSS)
+                            $rotatedImage = imagerotate($stickerImage, -$angle, $transparent);
+                            
+                            // On remplace l'image d'origine par la version pivotée en mémoire
+                            imagedestroy($stickerImage);
+                            $stickerImage = $rotatedImage;
+                            
+                            // Préparation de la transparence pour la fusion
+                            imagealphablending($stickerImage, true);
+                            imagesavealpha($stickerImage, true);
+                        }
+
+
 						imagecopyresampled(
 							$baseImage, 
 							$stickerImage, 
@@ -90,7 +109,9 @@ class StudioController {
 							imagesx($stickerImage), imagesy($stickerImage)
 						);
 						
-						imagedestroy($stickerImage);
+						$stickerImage = null;
+						//unset($stickerImage);
+						//imagedestroy($stickerImage);
 					}
 				}
 			}
@@ -107,7 +128,9 @@ class StudioController {
 			$statement = $user->getConnection()->prepare($request);
 			$statement->execute([':user_id' => $user_id, ':imageName' => $imageName]);
 
-			imagedestroy($baseImage);
+			$baseImage = null;
+			//unset($baseImage);
+			//imagedestroy($baseImage);
 			
 			// Réponse propre au navigateur
 			$response = ['status' => 'success', 'saved' => $isSaved, 'fileName' => $imageName];

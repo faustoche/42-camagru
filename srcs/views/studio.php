@@ -103,7 +103,7 @@
 
             <div class="app-canvas-area">
                 <div class="canvas-placeholder" style="position: relative;">
-                    <video id="video" autoplay style="max-width: 100%; border-radius: 8px;"></video>
+                    <video id="video" autoplay style="max-width: 100%; border-radius: 8px; transform: scaleX(-1);"></video>
                     <img id="uploaded-image" style="max-width: 100%; border-radius: 8px; display:none">
                     
                     <canvas id="canvas" style="display:none;"></canvas>
@@ -481,6 +481,13 @@
             video.srcObject = stream;
             uploadedImage.style.display = 'none';
             video.style.display = 'block';
+
+            const filtersTabBtn = document.querySelector('.tab-button[onclick*="filters-tab"]');
+            if (filtersTabBtn) {
+                filtersTabBtn.disabled = false;
+                filtersTabBtn.style.opacity = '1';
+                filtersTabBtn.style.cursor = 'pointer';
+            }
         })
         .catch(function(error) {
             console.error("Error: cannot access camera: ", error);
@@ -504,6 +511,18 @@
 
                 video.style.display = 'none';
                 uploadedImage.style.display = 'block';
+
+                activeFilterImage.src = '';
+                const stickersTabButton = document.querySelector('.tab-button[onclick*="stickers-tab"]');
+                if (stickersTabButton)
+                    stickersTabButton.click();
+
+                const filterTabButton = document.querySelector('.tab-button[onclick*=filters-tab]');
+                if (filterTabButton) {
+                    filterTabButton.disabled = true;
+                    filterTabButton.style.opacity = '0.4';
+                    filterTabButton.style.cursor = 'not-allowed';
+                }
             }
             
             reader.readAsDataURL(this.files[0]);
@@ -516,25 +535,30 @@
 
     const stickerItems = document.querySelectorAll('.app-sticker-item');
 
+
     stickerItems.forEach(item => {
         item.addEventListener('click', function() {
             const stickerFile = this.getAttribute('data-sticker');
             
+            // 1. Désélectionner tous les autres stickers présents sur le canvas
+            document.querySelectorAll('.sticker-box').forEach(box => box.classList.remove('selected'));
+
+            // 2. Création du conteneur principal
             const newBox = document.createElement('div');
-            newBox.className = 'sticker-box';
+            newBox.className = 'sticker-box selected'; // Sélectionné par défaut à l'apparition
             newBox.style.position = 'absolute';
-            newBox.style.top = '20px';
-            newBox.style.left = '20px';
-            newBox.style.border = '2px dashed #ff00aa';
-            newBox.style.overflow = 'hidden';
-            newBox.style.cursor = 'move';
+            newBox.style.top = '0px';
+            newBox.style.left = '0px';
             newBox.style.zIndex = '10';
 
-            newBox.style.opacity = '0';
-            newBox.style.transition = 'opacity 0.2s';
+            // Variables de transformation (Position, Angle, Échelle)
+            let tX = canvasPlaceholder.clientWidth / 2 - 60; // Centre de la vidéo
+            let tY = canvasPlaceholder.clientHeight / 2 - 60;
+            let angle = 0;
+            let scale = 1;
 
-            newBox.style.maxWidth = (canvasPlaceholder.clientWidth - 20) + 'px';
-            newBox.style.maxHeight = (canvasPlaceholder.clientHeight - 20) + 'px';
+            newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+            newBox.dataset.angle = angle; // On stocke l'angle dans le HTML pour l'envoi au serveur plus tard
 
             const newImg = document.createElement('img');
             newImg.src = '/stickers/' + stickerFile;
@@ -542,70 +566,98 @@
             newImg.style.height = '100%';
             newImg.style.pointerEvents = 'none';
 
-            newImg.onload = function() {
-                const ratio = newImg.naturalWidth / newImg.naturalHeight;
-                newBox.style.aspectRatio = ratio.toString();
-                
-                newBox.style.width = '120px';
-                newBox.style.height = 'auto';
-                
-                newBox.style.resize = 'horizontal';
-
-                newBox.style.opacity = '1';
-            };
-
+            // poigne pour rotation et angle
+            const content = document.createElement('div');
+            content.className = 'sticker-content';
             newBox.appendChild(newImg);
+
+            ['tl', 'tr', 'bl', 'br', 'rotate'].forEach(type => {
+                const h = document.createElement('div');
+                h.className = `sticker-handle handle-${type}`;
+                h.dataset.type = type;
+                newBox.appendChild(h);
+            });
             canvasPlaceholder.appendChild(newBox);
 
-            let isDragging = false;
-            let offsetX = 0;
-            let offsetY = 0;
+            // Ajustement de la taille de base respectant le ratio de l'image
+            newImg.onload = function() {
+                const ratio = newImg.naturalWidth / newImg.naturalHeight;
+                newBox.style.width = '120px';
+                newBox.style.height = (120 / ratio) + 'px';
+                tY = canvasPlaceholder.clientHeight / 2 - (120 / ratio) / 2; // Réajustement du centre Y exact
+                newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+            };
 
-            newBox.addEventListener("mousedown", function(e) {
-                if (e.offsetX > newBox.clientWidth - 20 && e.offsetY > newBox.clientHeight - 20) {
-                    return;
+            // 4. Moteur d'interactions
+            newBox.addEventListener('mousedown', function(e) {
+                e.stopPropagation(); // Empêche le clic de se propager au document
+                
+                // Remettre la sélection sur le sticker cliqué
+                document.querySelectorAll('.sticker-box').forEach(box => box.classList.remove('selected'));
+                newBox.classList.add('selected');
+
+                const startClientX = e.clientX;
+                const startClientY = e.clientY;
+
+                if (e.target.classList.contains('sticker-handle')) {
+                    const type = e.target.dataset.type;
+                    const rect = newBox.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    
+                    if (type === 'rotate') {
+                        // ratoation
+                        const startMouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                        const startAngle = angle;
+                        
+                        document.onmousemove = function(moveEvent) {
+                            const currentMouseAngle = Math.atan2(moveEvent.clientY - centerY, moveEvent.clientX - centerX);
+                            const angleDiff = (currentMouseAngle - startMouseAngle) * (180 / Math.PI);
+                            angle = startAngle + angleDiff;
+                            newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+                            newBox.dataset.angle = angle; // Mise à jour de la donnée
+                        };
+                    } else {
+                        // agrandissemnt
+                        const startScale = scale;
+                        const startDist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+                        
+                        document.onmousemove = function(moveEvent) {
+                            const currentDist = Math.hypot(moveEvent.clientX - centerX, moveEvent.clientY - centerY);
+                            scale = startScale * (currentDist / startDist);
+                            if (scale < 0.2) scale = 0.2; // Taille minimum imposée
+                            newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+                        };
+                    }
+                } else {
+                    // deplacement
+                    const startX = tX;
+                    const startY = tY;
+                    
+                    document.onmousemove = function(moveEvent) {
+                        tX = startX + (moveEvent.clientX - startClientX);
+                        tY = startY + (moveEvent.clientY - startClientY);
+                        newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+                    };
                 }
-                isDragging = true;
-                offsetX = e.clientX - newBox.offsetLeft;
-                offsetY = e.clientY - newBox.offsetTop;
-                newBox.style.cursor = 'grabbing';
-            });
 
-            document.addEventListener("mousemove", (e) => {
-                if (isDragging) {
-                    let newLeft = e.clientX - offsetX;
-                    let newTop = e.clientY - offsetY;
-
-                    // Calcul des limites maximales par rapport au conteneur de la vidéo
-                    let maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
-                    let maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
-
-                    let minLeft = maxLeft < 0 ? maxLeft : 0;
-                    let realMaxLeft = maxLeft < 0 ? 0 : maxLeft;
-                    let minTop = maxTop < 0 ? maxTop : 0;
-                    let realMaxTop = maxTop < 0 ? 0 : maxTop;
-
-                    // Blocage des coordonnées pour ne pas déborder (0 = bord haut/gauche)
-                    if (newLeft < minLeft) newLeft = minLeft;
-                    if (newTop < minTop) newTop = minTop;
-                    if (newLeft > realMaxLeft) newLeft = realMaxLeft;
-                    if (newTop > realMaxTop) newTop = realMaxTop;
-
-                    newBox.style.left = newLeft + 'px';
-                    newBox.style.top = newTop + 'px';
-
-                    newBox.style.maxWidth = (canvasPlaceholder.clientWidth - newLeft) + 'px';
-                    newBox.style.maxHeight = (canvasPlaceholder.clientHeight - newTop) + 'px';
-                }
-            });
-
-            document.addEventListener("mouseup", () => {
-                isDragging = false;
-                newBox.style.cursor = 'move';
+                // Libérer les événements au relâchement de la souris
+                document.onmouseup = function() {
+                    document.onmousemove = null;
+                    document.onmouseup = null;
+                };
             });
 
             captureButton.disabled = false;
         });
+    });
+
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.closest('#remove-button'))
+            return;
+        if (!e.target.closest('.sticker-box')) {
+            document.querySelectorAll('.sticker-box').forEach(box => box.classList.remove('selected'));
+        }
     });
 
     const canvas = document.getElementById('canvas');
@@ -644,12 +696,23 @@
             captureButton.innerHTML = "Take a picture!";
             canvas.width = realWidth;
             canvas.height = realHeight;
+
+            context.save();
+
+            if (activeElem === video) {
+                context.translate(realWidth, 0);
+                context.scale(-1, 1);
+            }
+
+            // inversion horizontale
             context.drawImage(activeElem, 0, 0, realWidth, realHeight);
 
+            context.restore();
             const faceOverlay = document.getElementById('faceapi-overlay');
             if (faceOverlay) {
                 context.drawImage(faceOverlay, 0, 0, realWidth, realHeight);
             }
+            
 
             hiddenInput.value = canvas.toDataURL('image/png');
     
@@ -679,7 +742,8 @@
                     x: Math.round(exactDiffX * widthRatio),
                     y: Math.round(exactDiffY * heightRatio),
                     width: Math.round(boxRect.width * widthRatio),
-                    height: Math.round(boxRect.height * heightRatio)
+                    height: Math.round(boxRect.height * heightRatio),
+                    angle: parseFloat(box.dataset.angle) || 0
                 });
             });
     
@@ -699,6 +763,7 @@
             .then(data => {
                 console.log("Serveur :", data);
                 allStickers.forEach(box => box.remove());
+                activeFilterImage.src = '';
                 captureButton.disabled = true;
                 
                 const newDiv = document.createElement("div");
@@ -798,21 +863,21 @@ filterItems.forEach(item => {
     });
 });
 
-// ==========================================
-// BOUTON REMOVE (UNIFIÉ)
-// ==========================================
 const removeButton = document.getElementById('remove-button');
 removeButton.addEventListener('click', function() {
     
-    // 1. Supprime tous les stickers statiques posés sur l'écran
-    const allStickers = document.querySelectorAll('.sticker-box');
-    allStickers.forEach(box => box.remove());
-    
-    // 2. Désactive le filtre dynamique sur le visage
-    activeFilterImage.src = ''; 
-    
-    // 3. Désactive le bouton de capture
-    document.querySelector('.app-btn-save').disabled = true;
+    const selectedSticker = document.querySelector('.sticker-box.selected');
+
+    if (selectedSticker) {
+        selectedSticker.remove();
+        console.log("ici");
+    } else {
+        activeFilterImage.src = '';
+    }
+
+    const remainingStickers = document.querySelectorAll('.sticker-box');
+    if (remainingStickers.length === 0 && (!activeFilterImage.src || activeFilterImage.src === ''))
+        document.querySelector('.app-btn-save').disabled = true;
 });
 
 </script>

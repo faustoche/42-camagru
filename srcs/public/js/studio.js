@@ -186,8 +186,9 @@ videoElement.addEventListener("playing", () => {
                         y = mouthCenterY - (filterHeight / 2) + (filterHeight * config.offsetY);
                     }
 
+                    const mirroredX = displaySize.width - (x + filterWidth);
                     // On dessine l'image finale
-                    offCtx.drawImage(activeFilterImage, x, y, filterWidth, filterHeight);
+                    offCtx.drawImage(activeFilterImage, mirroredX, y, filterWidth, filterHeight);
                 });
             }
 
