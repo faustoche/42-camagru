@@ -107,6 +107,7 @@
                     <img id="uploaded-image" style="max-width: 100%; border-radius: 8px; display:none">
                     
                     <canvas id="canvas" style="display:none;"></canvas>
+                    <div id="countdown-overlay" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; font-weight: bold; color: white; text-shadow: 0px 0px 20px rgba(0,0,0,0.8); z-index: 100; pointer-events: none; font-family: 'Bebas Neue', sans-serif;"></div>
 
                 </div>
             </div>
@@ -145,7 +146,7 @@
 
     <div id="modal-detail-view" style="text-align: center;">
         <br>
-		<div style="flex-grow: 1; background-color: #EFEFEF; display: flex; align-items: center; justify-content: center; position: relative;">
+		<div style="background-color: #EFEFEF; display: flex; align-items: center; justify-content: center; position: relative;">
 
 
 			<button type="button" id="button-back" style="position: absolute; left: 15px; background:none; width: 35px; height: 35px; cursor: pointer; font-weight: bold;"><</button>
@@ -685,15 +686,22 @@
 
         let timeout = 3;
 
-        captureButton.innerHTML = timeout;
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        countdownOverlay.style.display = 'block';
+        countdownOverlay.innerHTML = timeout;
+
+        // Vous pouvez supprimer l'ancienne ligne : captureButton.innerHTML = timeout;
+
         const intervalId = setInterval(function() {
             timeout--;
-            captureButton.innerHTML = timeout;
+            if (timeout > 0) {
+                countdownOverlay.innerHTML = timeout;
+            }
         }, 1000);
 
         setTimeout(() => {
             clearInterval(intervalId);
-            captureButton.innerHTML = "Take a picture!";
+            countdownOverlay.style.display = 'none';
             canvas.width = realWidth;
             canvas.height = realHeight;
 
@@ -716,33 +724,68 @@
 
             hiddenInput.value = canvas.toDataURL('image/png');
     
-            // Calculs des ratios
+            // --- NOUVEAU CALCUL DES RATIOS RESPONSIVE ---
+            let renderedWidth, renderedHeight, renderedLeft, renderedTop;
             const activeRect = activeElem.getBoundingClientRect();
-            const widthRatio = realWidth / activeRect.width;
-            const heightRatio = realHeight / activeRect.height;
+
+            if (activeElem === video) {
+                // Pour la vidéo, il faut calculer la taille RÉELLE affichée 
+                // en respectant le ratio de la caméra, car le navigateur peut ajouter des bandes vides
+                const videoRatio = activeElem.videoWidth / activeElem.videoHeight;
+                const rectRatio = activeRect.width / activeRect.height;
+
+                if (videoRatio > rectRatio) {
+                    // La vidéo touche les bords gauche/droite, bandes en haut/bas
+                    renderedWidth = activeRect.width;
+                    renderedHeight = activeRect.width / videoRatio;
+                    renderedLeft = activeRect.left;
+                    renderedTop = activeRect.top + (activeRect.height - renderedHeight) / 2;
+                } else {
+                    // La vidéo touche le haut/bas, bandes à gauche/droite
+                    renderedHeight = activeRect.height;
+                    renderedWidth = activeRect.height * videoRatio;
+                    renderedTop = activeRect.top;
+                    renderedLeft = activeRect.left + (activeRect.width - renderedWidth) / 2;
+                }
+            } else {
+                 // Pour l'image uploadée, on utilise la boîte CSS standard
+                 renderedWidth = activeRect.width;
+                 renderedHeight = activeRect.height;
+                 renderedLeft = activeRect.left;
+                 renderedTop = activeRect.top;
+            }
+
+            // Le vrai ratio entre la résolution du canvas (PHP) et la taille visuelle stricte
+            const widthRatio = realWidth / renderedWidth;
+            const heightRatio = realHeight / renderedHeight;
             
             let stickersArray = [];
             const allStickers = document.querySelectorAll('.sticker-box');
     
-            // Analyse de chaque sticker présent sur la vidéo
+            // Analyse de chaque sticker présent
             allStickers.forEach(box => {
                 const img = box.querySelector('img');
                 const imgUrl = new URL(img.src);
                 const filename = decodeURIComponent(imgUrl.pathname.split('/stickers/')[1]);
     
-                // On prend les mesures EXACTES de la boîte sur l'écran physique
                 const boxRect = box.getBoundingClientRect();
     
-                // Différence mathématique pure, indépendante du HTML autour
-                const exactDiffX = boxRect.left - activeRect.left;
-                const exactDiffY = boxRect.top - activeRect.top;
+                // Différence par rapport à la zone *réellement* dessinée de la vidéo
+                const exactDiffX = boxRect.left - renderedLeft;
+                const exactDiffY = boxRect.top - renderedTop;
     
+                // Calcul des dimensions finales pour PHP
+                let finalX = exactDiffX * widthRatio;
+                const finalY = exactDiffY * heightRatio;
+                const finalWidth = boxRect.width * widthRatio;
+                const finalHeight = boxRect.height * heightRatio;
+
                 stickersArray.push({
                     src: filename,
-                    x: Math.round(exactDiffX * widthRatio),
-                    y: Math.round(exactDiffY * heightRatio),
-                    width: Math.round(boxRect.width * widthRatio),
-                    height: Math.round(boxRect.height * heightRatio),
+                    x: Math.round(finalX),
+                    y: Math.round(finalY),
+                    width: Math.round(finalWidth),
+                    height: Math.round(finalHeight),
                     angle: parseFloat(box.dataset.angle) || 0
                 });
             });

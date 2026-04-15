@@ -100,14 +100,79 @@ class StudioController {
                         }
 
 
-						imagecopyresampled(
-							$baseImage, 
-							$stickerImage, 
-							$sticker['x'], $sticker['y'], 
-							0, 0, 
-							$sticker['width'], $sticker['height'], 
-							imagesx($stickerImage), imagesy($stickerImage)
-						);
+						$dst_x = floatval($sticker['x']);
+                        $dst_y = floatval($sticker['y']);
+                        $dst_w = floatval($sticker['width']);
+                        $dst_h = floatval($sticker['height']);
+
+                        // 🔴 SÉCURITÉ : On ignore le sticker s'il n'a pas de dimension 
+                        // pour éviter une erreur fatale de division par zéro
+                        if ($dst_w <= 0 || $dst_h <= 0) {
+                            continue;
+                        }
+
+                        $src_w_full = imagesx($stickerImage);
+                        $src_h_full = imagesy($stickerImage);
+
+                        $src_x = 0;
+                        $src_y = 0;
+                        $src_w = $src_w_full;
+                        $src_h = $src_h_full;
+
+                        $canvas_w = imagesx($baseImage);
+                        $canvas_h = imagesy($baseImage);
+
+                        // Ratios pour conserver les proportions si on coupe
+                        $ratio_x = $src_w_full / $dst_w;
+                        $ratio_y = $src_h_full / $dst_h;
+
+                        // 1. Rognage si ça déborde à gauche
+                        if ($dst_x < 0) {
+                            $crop_w_dst = abs($dst_x);
+                            $crop_w_src = $crop_w_dst * $ratio_x;
+                            $src_x += $crop_w_src;
+                            $src_w -= $crop_w_src;
+                            $dst_w -= $crop_w_dst;
+                            $dst_x = 0;
+                        }
+
+                        // 2. Rognage si ça déborde en haut
+                        if ($dst_y < 0) {
+                            $crop_h_dst = abs($dst_y);
+                            $crop_h_src = $crop_h_dst * $ratio_y;
+                            $src_y += $crop_h_src;
+                            $src_h -= $crop_h_src;
+                            $dst_h -= $crop_h_dst;
+                            $dst_y = 0;
+                        }
+
+                        // 3. Rognage si ça déborde à droite
+                        if ($dst_x + $dst_w > $canvas_w) {
+                            $overflow_dst = ($dst_x + $dst_w) - $canvas_w;
+                            $overflow_src = $overflow_dst * $ratio_x;
+                            $src_w -= $overflow_src;
+                            $dst_w -= $overflow_dst;
+                        }
+
+                        // 4. Rognage si ça déborde en bas
+                        if ($dst_y + $dst_h > $canvas_h) {
+                            $overflow_dst = ($dst_y + $dst_h) - $canvas_h;
+                            $overflow_src = $overflow_dst * $ratio_y;
+                            $src_h -= $overflow_src;
+                            $dst_h -= $overflow_dst;
+                        }
+
+                        if ($dst_w > 0 && $dst_h > 0 && $src_w > 0 && $src_h > 0) {
+                            imagecopyresampled(
+                                $baseImage, 
+                                $stickerImage, 
+                                (int)round($dst_x), (int)round($dst_y), 
+                                (int)round($src_x), (int)round($src_y), 
+                                (int)round($dst_w), (int)round($dst_h), 
+                                (int)round($src_w), (int)round($src_h)
+                            );
+                        }
+
 						
 						$stickerImage = null;
 						//unset($stickerImage);
