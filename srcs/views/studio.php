@@ -539,6 +539,11 @@
 
     stickerItems.forEach(item => {
         item.addEventListener('click', function() {
+
+            if (!video.srcObject && uploadedImage.style.display !== 'block') {
+                alert("Please authorize camera's access or upload a picture before adding a sticker.");
+                return;
+            }
             const stickerFile = this.getAttribute('data-sticker');
             
             // 1. Désélectionner tous les autres stickers présents sur le canvas
@@ -895,6 +900,11 @@ const filterItems = document.querySelectorAll('.app-filter-item');
 
 filterItems.forEach(item => {
     item.addEventListener('click', function() {
+
+        if (!video.srcObject && uploadedImage.style.display !== 'block') {
+            alert("Please authorize camera's access or upload a picture before adding a sticker.");
+            return;
+        }
         const filterFile = this.getAttribute('data-filter');
         
         // Au lieu de créer un élément HTML, on met à jour la source de l'image
