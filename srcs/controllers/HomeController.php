@@ -11,11 +11,6 @@ class HomeController {
 		$currentPage = max(1, (int)($_GET['page'] ?? 1));
 		$offset = ($currentPage - 1) * $perPage;
 
-		// Compte total
-		// $countStmt = $user->getConnection()->query("SELECT COUNT(*) FROM images WHERE is_published = TRUE");
-		// $totalImages = (int)$countStmt->fetchColumn();
-		// $totalPages = max(1, (int)ceil($totalImages / $perPage));
-
 		$request = "SELECT images.id, images.filename, users.username, COUNT(likes.user_id) AS likes 
 					FROM images 
 					INNER JOIN users ON images.user_id = users.id 
@@ -192,8 +187,6 @@ class HomeController {
 
 	public function loadImageGallery() {
 		$input = json_decode(file_get_contents('php://input'), true);
-
-		// chargeement de 10 images par default pour le scroll -> est-ce que on passe a 20?
 		$perPage = 20;
 		$currentPage = max(1, (int)($input['page'] ?? 1));
 		$offset = ($currentPage - 1) * $perPage;
