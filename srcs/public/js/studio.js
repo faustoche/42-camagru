@@ -69,7 +69,7 @@ const filtersConfig = {
     },
     'labubu.png': {
         anchor: 'head',
-        widthRatio: 1.7,
+        widthRatio: 1.6,
         offsetY: -0.3
     },
 
