@@ -14,13 +14,26 @@
 					} elseif ($_GET['error'] === 'invalid_email') {
 						echo "The email format is invalid.";
 					} elseif ($_GET['error'] === 'weak_password') {
-						echo "Your password must contain at least 8 characters, including a letter and a number.";
+						echo "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
 					} else {
 						echo "An error occurred. Please try again.";
 					}
 				?>
 			</div>
 		<?php endif; ?>
+
+		<?php if (isset($_GET['success'])): ?>
+			<div style="color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+				<?php
+					if ($_GET['success'] === 'profile_updated') {
+						echo "Your profile information has been successfully updated.";
+					} elseif ($_GET['success'] === 'password_updated') {
+						echo "Your password has been successfully changed.";
+					}
+				?>
+			</div>
+		<?php endif; ?>
+
 		<form action="/profile" method="POST">
 			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 

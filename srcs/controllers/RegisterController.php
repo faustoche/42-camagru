@@ -60,8 +60,8 @@ class RegisterController {
 		## Vérification que le mdp fait 8 characters
 		if (!empty($_POST['password'])) {
 			$password = checkInput($_POST['password']);
-			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password))
-				$errors['invalid-password'] = "Invalid password";
+			if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $password))
+				$errors['invalid-password'] = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
 		} else {
 			$errors['password-required'] = "Password is required";
 		}

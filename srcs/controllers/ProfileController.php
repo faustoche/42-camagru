@@ -69,11 +69,14 @@ class ProfileController {
 				':email_notifications' => $email_notifications,
 				':user_id' => $user_id
 			]);
+
+			header('Location: /profile?success=profile_updated');
+			exit();
 		}
 		elseif (isset($_POST['password']) && !empty($_POST['password'])) {
 			$password = checkInput($_POST['password']);
 			
-			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password)) {
+			if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $password)) {
 				header('Location: /profile?error=weak_password');
 				exit();
 			}
@@ -86,6 +89,9 @@ class ProfileController {
 				':password' => $passwordHashed,
 				':user_id' => $user_id
 			]);
+
+			header('Location: /profile?success=profile_updated');
+			exit();
 		}
 
 		header('Location: /profile');

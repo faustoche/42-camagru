@@ -69,8 +69,8 @@ class PasswordController {
 			$password = $_POST['password'];
 			$token = $_POST['token'];
 
-			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password)) {
-				die("Password doesn't match password requirement");
+			if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $password)) {
+				die("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
 			}
 			
 			if ($user->isValidRequestToken($token)) {
