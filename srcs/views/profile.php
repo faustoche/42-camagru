@@ -64,6 +64,7 @@
 
 		<div class="form-divider"></div>
 		<form action="/profile" method="POST">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 			<div class="form-group">
 				<label for="password-input">Password</label>

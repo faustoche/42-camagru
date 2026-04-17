@@ -8,7 +8,7 @@ class PasswordController {
 		Auth::requireGuest();
 
 		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
-			die("Erreur de sécurité CSRF : requête invalide.");
+			die("Erreur de sécurité CSRF : requête invalide2.");
 		}
 		$email = trim($_POST['email']);
 
@@ -61,7 +61,7 @@ class PasswordController {
 		
 		Auth::requireGuest();
 		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
-			die("Erreur de sécurité CSRF : requête invalide.");
+			die("Erreur de sécurité CSRF : requête invalide. 3");
 		}
 		$user = new Users();
 

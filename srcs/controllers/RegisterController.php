@@ -27,7 +27,7 @@ class RegisterController {
 
 		Auth::requireGuest();
 		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
-			die("Erreur de sécurité CSRF : requête invalide.");
+			die("Erreur de sécurité CSRF : requête invalide.5");
 		}
 
 		$errors = [];

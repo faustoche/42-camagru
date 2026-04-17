@@ -683,6 +683,7 @@
 	captureButton.addEventListener('click', function(event) {
 		event.preventDefault();
 
+		captureButton.disabled = true;
 		const imageCaptured = document.getElementById('uploaded-image');
 		let activeElem;
 		let realWidth;
@@ -703,8 +704,6 @@
 		const countdownOverlay = document.getElementById('countdown-overlay');
 		countdownOverlay.style.display = 'block';
 		countdownOverlay.innerHTML = timeout;
-
-		// Vous pouvez supprimer l'ancienne ligne : captureButton.innerHTML = timeout;
 
 		const intervalId = setInterval(function() {
 			timeout--;
@@ -757,10 +756,10 @@
 					renderedLeft = activeRect.left + (activeRect.width - renderedWidth) / 2;
 				}
 			} else {
-				 renderedWidth = activeRect.width;
-				 renderedHeight = activeRect.height;
-				 renderedLeft = activeRect.left;
-				 renderedTop = activeRect.top;
+				renderedWidth = activeRect.width;
+				renderedHeight = activeRect.height;
+				renderedLeft = activeRect.left;
+				renderedTop = activeRect.top;
 			}
 
 			const widthRatio = realWidth / renderedWidth;
