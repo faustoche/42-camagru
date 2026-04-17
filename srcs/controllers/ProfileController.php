@@ -93,7 +93,6 @@ class ProfileController {
 	}
 }
 
-## htmlspecialchar pour éviter les injections XSS
 function checkInput(string $data) {
 	$data = trim($data);
 	$data = htmlspecialchars($data);

@@ -1,35 +1,31 @@
+DOCKER ?= docker
+COMPOSE = $(DOCKER) compose -f ./docker-compose.yml
+
 all: up
 
-up:	build
-	docker compose -f ./docker-compose.yml up -d
+up: build
+	$(COMPOSE) up -d
 
 down:
-	docker compose -f ./docker-compose.yml down
+	$(COMPOSE) down
 
 stop:
-	docker compose -f ./docker-compose.yml stop
+	$(COMPOSE) stop
 
 start:
-	docker compose -f ./docker-compose.yml start
+	$(COMPOSE) start
 
 build:
-	docker compose -f ./docker-compose.yml build
+	$(COMPOSE) build
 
 clean:
-	@docker stop $$(docker ps -aq) || true
-	@docker rm $$(docker ps -aq) || true
-
-	@docker rmi -f $$(docker images -aq) || true
-
-	@docker volume rm $$(docker volume ls -q) || true
-
-	@docker network rm $$(docker network ls -q) || true
-
-
-# UPLOADS=/srcs/public/uploads
-# [ -d $(UPLOADS) ] || mkdir -p $(UPLOADS)
+	@$(DOCKER) stop $$( $(DOCKER) ps -aq ) || true
+	@$(DOCKER) rm $$( $(DOCKER) ps -aq ) || true
+	@$(DOCKER) rmi -f $$( $(DOCKER) images -aq ) || true
+	@$(DOCKER) volume rm $$( $(DOCKER) volume ls -q ) || true
+	@$(DOCKER) network rm $$( $(DOCKER) network ls -q ) || true
 
 re: clean up
 
-fclean:	clean
-	@docker system prune -a --volumes -f
+fclean: clean
+	@$(DOCKER) system prune -a --volumes -f

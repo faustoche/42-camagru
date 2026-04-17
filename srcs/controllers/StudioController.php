@@ -91,7 +91,8 @@ class StudioController {
                             $rotatedImage = imagerotate($stickerImage, -$angle, $transparent);
                             
                             // On remplace l'image d'origine par la version pivotée en mémoire
-                            imagedestroy($stickerImage);
+							$stickerImage = null;
+                            //imagedestroy($stickerImage);
                             $stickerImage = $rotatedImage;
                             
                             // Préparation de la transparence pour la fusion

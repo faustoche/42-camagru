@@ -33,7 +33,7 @@ class HomeController {
 		## On charge la vue qu'on veut 
 		require_once __DIR__ . '/../views/home.php';
 
-		# Récupération du contenu mis en mémoire dans la variable $content
+		## Récupération du contenu mis en mémoire dans la variable $content
 		## Nettoyage du tampon
 		$content = ob_get_clean();
 
@@ -49,7 +49,7 @@ class HomeController {
 		$user = new Users();
 		$db = $user->getConnection();
 
-		// 1. Trouver l'ID de l'image
+		## On trouve l'id de l'image
 		$req = $db->prepare("SELECT images.id, images.created_at, users.username AS author FROM images INNER JOIN users ON images.user_id = users.id WHERE images.filename = :filename");
 		$req->execute([':filename' => $filename]);
 		$imageData = $req->fetch(PDO::FETCH_ASSOC);
@@ -58,12 +58,12 @@ class HomeController {
 		$author = $imageData['author'];
 		$date = $imageData['created_at'];
 
-		// 2. Compter les likes
+		## On compte son nombre de likes
 		$reqLike = $db->prepare("SELECT COUNT(*) AS total FROM likes WHERE image_id = :image_id");
 		$reqLike->execute([':image_id' => $imageId]);
 		$likes = $reqLike->fetch(PDO::FETCH_ASSOC)['total'];
 
-		// 3. Savoir si l'utilisateur connecté a liké (pour afficher le bon coeur)
+		## Est-ce que l'utilisateur connecté a liké?
 		$userLiked = false;
 		if (isset($_SESSION['user_id'])) {
 			$reqCheck = $db->prepare("SELECT 1 FROM likes WHERE image_id = :image_id AND user_id = :user_id");
@@ -73,7 +73,7 @@ class HomeController {
 			}
 		}
 
-		// 4. Récupérer les commentaires
+		## On recupère les commentaires
 		$reqCom = $db->prepare("SELECT comments.content, users.username FROM comments INNER JOIN users ON comments.user_id = users.id WHERE comments.image_id = :image_id ORDER BY comments.created_at ASC");
 		$reqCom->execute([':image_id' => $imageId]);
 		$comments = $reqCom->fetchAll(PDO::FETCH_ASSOC);
@@ -111,11 +111,11 @@ class HomeController {
 		$checkReq->execute([':image_id' => $imageId, ':user_id' => $userId]);
 
 		if ($checkReq->fetch()) {
-			// Il y a un like, on le supprime
+			## Il y a un like, on le supprime
 			$del = $db->prepare("DELETE FROM likes WHERE image_id = :image_id AND user_id = :user_id");
 			$del->execute([':image_id' => $imageId, ':user_id' => $userId]);
 		} else {
-			// Pas de like, on l'ajoute
+			## Pas de like, on l'ajoute
 			$ins = $db->prepare("INSERT INTO likes (user_id, image_id) VALUES (:user_id, :image_id)");
 			$ins->execute([':user_id' => $userId, ':image_id' => $imageId]);
 		}
@@ -135,7 +135,7 @@ class HomeController {
 		}
 
 		$filename = $input['filename'];
-		$content = htmlspecialchars($input['content']); // Sécurité de base
+		$content = htmlspecialchars($input['content']);
 		
 		$user = new Users();
 		$db = $user->getConnection();

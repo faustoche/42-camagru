@@ -15,7 +15,7 @@ class RegisterController {
 		## On charge la vue qu'on veut 
 		require_once __DIR__ . '/../views/register.php';
 
-		# Récupération du contenu mis en mémoire dans la variable $content
+		## Récupération du contenu mis en mémoire dans la variable $content
 		## Nettoyage du tampon
 		$content = ob_get_clean();
 
@@ -112,7 +112,7 @@ class RegisterController {
 	}
 
 	public function showVerifyNotice() {
-		// Si la personne arrive ici sans être passée par l'inscription, on la renvoie au login
+		## Si la personne arrive ici sans être passée par l'inscription, on la renvoie au login
 		if (!isset($_SESSION['pending_email'])) {
 			header('Location: /login');
 			exit();
@@ -162,7 +162,6 @@ class RegisterController {
 	}
 }
 
-## htmlspecialchar pour éviter les injections XSS
 function checkInput(string $data) {
 	$data = trim($data);
 	$data = htmlspecialchars($data);
