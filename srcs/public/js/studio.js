@@ -94,7 +94,7 @@ Promise.all([
 }).catch((err) => {
     console.error("Loading error :", err);
 });
-// Déclaration globale
+
 window.isTracking = false;
 
 videoElement.addEventListener("playing", () => {
@@ -155,7 +155,7 @@ videoElement.addEventListener("playing", () => {
                 .detectAllFaces(videoElement, detectorOptions)
                 .withFaceLandmarks();
 
-            // Sécurité post-analyse : on abandonne le dessin si le flux a été coupé entre-temps
+            // Son abandonne le dessin si le flux a été coupé entre-temps
             if (!window.isTracking) return;
 
             const offCtx = offscreenCanvas.getContext("2d");
