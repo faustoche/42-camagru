@@ -2,50 +2,49 @@
 
 require_once __DIR__ . '/../models/User.php';
 
-//TODO: AMELIORER LE RENVOIS D'ERREUR - REMPLACER TOUS LES ECHOS
+// TODO: IMPROVE ERROR RETURNS - REPLACE ALL ECHOS
 
+/**
+ * REGISTER CONTROLLER
+ * Handle account creation, validation, and email confirmation 
+ */
 class RegisterController {
 
+	/**
+	 * Display registration form
+	 */
 	public function showForm(array $tab = []) {
 		Auth::requireGuest();
-		## Démarrage de la temporisation de sortie 
-		## Mise en pause de l'affichage
+		
 		ob_start();
-
-		## On charge la vue qu'on veut 
 		require_once __DIR__ . '/../views/register.php';
-
-		## Récupération du contenu mis en mémoire dans la variable $content
-		## Nettoyage du tampon
 		$content = ob_get_clean();
-
-		## Appel du layout général qui va lire $content et l'afficher
 		require_once __DIR__ . '/../views/layout.php';
 	}
 
+	/**
+	 * Process the registration form data
+	 */
 	public function processRegistration() {
 
 		Auth::requireGuest();
 		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
-			die("Erreur de sécurité CSRF : requête invalide.5");
+			die("Erreur de sécurité CSRF : requête invalide");
 		}
 
 		$errors = [];
-
 		$user = new Users();
 
-		## Vérification que les 3 champs sont bien présents avec la superglobale
+		// Verifies that all 3 fields are present and valid
 		if (!empty($_POST['username'])) {
 			$username = checkInput($_POST['username']);
 			if ($user->isUsernameTaken($username)) {
 				$errors['username-taken'] = "Username is already taken";
 			}
-
 		} else {
 			$errors['username-required'] = "Username is required";
 		}
 
-		## Vérification que l'email est bien sous forme d'email
 		if (!empty($_POST['email'])) {
 			$email = checkInput($_POST['email']);
 			if (!filter_var($email, FILTER_VALIDATE_EMAIL))
@@ -57,7 +56,6 @@ class RegisterController {
 			$errors['email-required'] = "Email is required";
 		}
 
-		## Vérification que le mdp fait 8 characters
 		if (!empty($_POST['password'])) {
 			$password = checkInput($_POST['password']);
 			if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/', $password))
@@ -69,24 +67,31 @@ class RegisterController {
 		if (!empty($errors)) {
 			$this->showForm($errors);
 		} else {
+			// Nhash the password and generate a validation token
 			$passwordHashed = password_hash($password, PASSWORD_ARGON2ID);
 			$randomToken = bin2hex(random_bytes('15'));
+			
+			// Save the new inactive user to the database
 			$user->saveUser($username, $email, $passwordHashed, $randomToken);
 
+			// Prepare and send the verification email
 			$appUrl = $_SERVER['HTTP_HOST'];
-
 			$confirmationPath = "http://" . $appUrl . "/confirm?token=" . $randomToken;
 			$emailSubject = "Welcome! Please, verify your account.";
 			$emailMessage = "Click on the link to verify your account: " . $confirmationPath;
 
 			mail($email, $emailSubject, $emailMessage);
 
+			// Store email in session to display the "Verify Notice" page 
 			$_SESSION['pending_email'] = $email;
 			header('Location: /verify-notice');
 			exit();
 		}
 	}
 
+	/**
+	 * Validate the account when the user clicks the link in their email
+	 */
 	public function confirmAccount() {
 		if (!isset($_GET['token'])) {
 			header('Location: /');
@@ -97,10 +102,12 @@ class RegisterController {
 		$user = new Users();
 		$db = $user->getConnection();
 
+		// Search for the token for an unconfirmed account
 		$request = $db->prepare("SELECT id FROM users WHERE confirmation_token = :token AND confirmed = FALSE");
 		$request->execute([':token' => $token]);
 		$result = $request->fetch();
 
+		// If found, set confirmed to tru and delete the token
 		if ($result) {
 			$update = $db->prepare("UPDATE users SET confirmed = TRUE, confirmation_token = NULL WHERE confirmation_token = :token");
 			$update->execute([':token' => $token]);
@@ -111,8 +118,10 @@ class RegisterController {
 		exit();
 	}
 
+	/**
+	 * Display a prompt asking the user to check their email inbox.
+	 */
 	public function showVerifyNotice() {
-		## Si la personne arrive ici sans être passée par l'inscription, on la renvoie au login
 		if (!isset($_SESSION['pending_email'])) {
 			header('Location: /login');
 			exit();
@@ -126,6 +135,9 @@ class RegisterController {
 		require_once __DIR__ . '/../views/layout.php';
 	}
 
+	/**
+	 * resend the verification email if requested by the user
+	 */
 	public function resendVerificationEmail() {
 		if (!isset($_SESSION['pending_email'])) {
 			echo json_encode(['status' => 'error', 'message' => 'Session expired. Please register again or log in.']);

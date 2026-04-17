@@ -2,11 +2,18 @@
 
 require_once __DIR__ . "/../models/User.php";
 
+/**
+ * Home controller
+ * Manages the main public gallery, infinite scrolling, and user interactions (likes, comments)
+ */
 class HomeController {
+	
+	/**
+	 * Displays the main page (gallery) with infinite pagination.
+	 */
 	public function index() {
 
 		$user = new Users();
-
 		$perPage = 20;
 		$currentPage = max(1, (int)($_GET['page'] ?? 1));
 		$offset = ($currentPage - 1) * $perPage;
@@ -26,22 +33,20 @@ class HomeController {
 		$statement->execute();
 		$images = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-		## Démarrage de la temporisation de sortie 
-		## Mise en pause de l'affichage
+		// Starts output buffering to pause direct HTML output ////////////////////////////// WTF DOES IT MEANS
 		ob_start();
 
-		## On charge la vue qu'on veut 
+		// Load the views
 		require_once __DIR__ . '/../views/home.php';
-
-		## Récupération du contenu mis en mémoire dans la variable $content
-		## Nettoyage du tampon
 		$content = ob_get_clean();
-
-		## Appel du layout général qui va lire $content et l'afficher
 		require_once __DIR__ . '/../views/layout.php';
 	}
 
+	/**
+	 * Retrieves details of a specific image (author, date, likes, comments)
+	 */
 	public function getImageDetails() {
+
 		$input = json_decode(file_get_contents('php://input'), true);
 		$filename = $input['filename'];
 		if (!$filename) exit();
@@ -49,7 +54,6 @@ class HomeController {
 		$user = new Users();
 		$db = $user->getConnection();
 
-		## On trouve l'id de l'image
 		$req = $db->prepare("SELECT images.id, images.created_at, users.username AS author FROM images INNER JOIN users ON images.user_id = users.id WHERE images.filename = :filename");
 		$req->execute([':filename' => $filename]);
 		$imageData = $req->fetch(PDO::FETCH_ASSOC);
@@ -58,12 +62,12 @@ class HomeController {
 		$author = $imageData['author'];
 		$date = $imageData['created_at'];
 
-		## On compte son nombre de likes
+		// Counts the total number of likes for this image
 		$reqLike = $db->prepare("SELECT COUNT(*) AS total FROM likes WHERE image_id = :image_id");
 		$reqLike->execute([':image_id' => $imageId]);
 		$likes = $reqLike->fetch(PDO::FETCH_ASSOC)['total'];
 
-		## Est-ce que l'utilisateur connecté a liké?
+		// Checks if the logged user has already liked image
 		$userLiked = false;
 		if (isset($_SESSION['user_id'])) {
 			$reqCheck = $db->prepare("SELECT 1 FROM likes WHERE image_id = :image_id AND user_id = :user_id");
@@ -73,11 +77,12 @@ class HomeController {
 			}
 		}
 
-		## On recupère les commentaires
+		// Fetch comments associated with this image
 		$reqCom = $db->prepare("SELECT comments.content, users.username FROM comments INNER JOIN users ON comments.user_id = users.id WHERE comments.image_id = :image_id ORDER BY comments.created_at ASC");
 		$reqCom->execute([':image_id' => $imageId]);
 		$comments = $reqCom->fetchAll(PDO::FETCH_ASSOC);
 
+		// Returns datas as a JSON response to the frontend
 		header('Content-Type: application/json');
 		echo json_encode([
 			'likes' => $likes, 
@@ -89,10 +94,14 @@ class HomeController {
 		exit();
 	}
 
+	/**
+	 * add or remove a like for logged user on a specific image
+	 */
 	public function toggleLike() {
 		Auth::requireLogin();
 		$input = json_decode(file_get_contents('php://input'), true);
 
+		// Validate CSRF token to prevent attack
 		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
 			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
 			exit();
@@ -103,19 +112,21 @@ class HomeController {
 		$db = $user->getConnection();
 		$userId = $_SESSION['user_id'];
 
+		// Retrieve the image ID based on the provided filename
 		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
 		$req->execute([':filename' => $filename]);
 		$imageId = $req->fetch(PDO::FETCH_ASSOC)['id'];
 
+		// Checks if the user has already liked the image
 		$checkReq = $db->prepare("SELECT 1 FROM likes WHERE image_id = :image_id AND user_id = :user_id");
 		$checkReq->execute([':image_id' => $imageId, ':user_id' => $userId]);
 
 		if ($checkReq->fetch()) {
-			## Il y a un like, on le supprime
+			// If a like exists, remove it (unlike)
 			$del = $db->prepare("DELETE FROM likes WHERE image_id = :image_id AND user_id = :user_id");
 			$del->execute([':image_id' => $imageId, ':user_id' => $userId]);
 		} else {
-			## Pas de like, on l'ajoute
+			// If no like exists, add it
 			$ins = $db->prepare("INSERT INTO likes (user_id, image_id) VALUES (:user_id, :image_id)");
 			$ins->execute([':user_id' => $userId, ':image_id' => $imageId]);
 		}
@@ -125,25 +136,32 @@ class HomeController {
 		exit();
 	}
 
+	/**
+	 * add a comment to an image and notifies the owner via email
+	 */
 	public function addComment() {
 		Auth::requireLogin();
 		$input = json_decode(file_get_contents('php://input'), true);
 
+		// CSRF validation
 		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
 			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
 			exit();
 		}
 
 		$filename = $input['filename'];
+		// prevent XSS attacks
 		$content = htmlspecialchars($input['content']);
 		
 		$user = new Users();
 		$db = $user->getConnection();
 		
+		// Retrieves the image ID
 		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
 		$req->execute([':filename' => $filename]);
 		$imageId = $req->fetch(PDO::FETCH_ASSOC)['id'];
 
+		// Inserts the new comment into the database
 		$ins = $db->prepare("INSERT INTO comments (user_id, image_id, content) VALUES (:user_id, :image_id, :content)");
 		$ins->execute([
 			':user_id' => $_SESSION['user_id'],
@@ -154,6 +172,7 @@ class HomeController {
 		header('Content-Type: application/json');
 		echo json_encode(['status' => 'success']);
 
+		// Retrieves the image owner's preferences and email address
 		$reqOwner = $db->prepare("
 			SELECT users.id AS owner_id, users.email, users.email_notifications 
 			FROM images 
@@ -164,9 +183,10 @@ class HomeController {
 		$ownerData = $reqOwner->fetch(PDO::FETCH_ASSOC);
 
 		if ($ownerData) {
-
+			// If the owner has email notifications enabled & is not the one commenting
 			if ($ownerData['email_notifications'] == 1 && $ownerData['owner_id'] != $_SESSION['user_id']) {
 				
+				// Prepare and send the notification email
 				$to = $ownerData['email'];
 				$subject = "Camagru - You just received a new comment !";
 
@@ -185,6 +205,9 @@ class HomeController {
 		exit();
 	}
 
+	/**
+	 * oads the next batch of images for infinite scrolling
+	 */
 	public function loadImageGallery() {
 		$input = json_decode(file_get_contents('php://input'), true);
 		$perPage = 20;
@@ -192,15 +215,14 @@ class HomeController {
 		$offset = ($currentPage - 1) * $perPage;
 
 		$user = new Users();
-
 		$request = "SELECT images.id, images.filename, users.username, COUNT(likes.user_id) AS likes 
-                FROM images 
-                INNER JOIN users ON images.user_id = users.id 
-                LEFT JOIN likes ON images.id = likes.image_id 
-                WHERE images.is_published = TRUE 
-                GROUP BY images.id 
-                ORDER BY images.created_at DESC
-                LIMIT :limit OFFSET :offset";
+				FROM images 
+				INNER JOIN users ON images.user_id = users.id 
+				LEFT JOIN likes ON images.id = likes.image_id 
+				WHERE images.is_published = TRUE 
+				GROUP BY images.id 
+				ORDER BY images.created_at DESC
+				LIMIT :limit OFFSET :offset";
 		
 		$statement = $user->getConnection()->prepare($request);
 		$statement->bindValue(':limit', $perPage, PDO::PARAM_INT);

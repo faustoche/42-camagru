@@ -2,8 +2,10 @@
 
 require_once __DIR__ . '/../core/Database.php';
 
-## Construction du système d'inscription
-
+/**
+ * User model
+ * Handles database operations for user registration, authentication, and management
+ */
 class Users {
 
 	private $pdoConnection;
@@ -13,26 +15,25 @@ class Users {
 		$this->pdoConnection = $db->getConnection();
 	}
 
+	/**
+	 * Returns the current PDO connection object
+	 */
 	public function getConnection() { return $this->pdoConnection; }
 
+	/**
+	 * Checks if a given username already exists in the database
+	 */
 	public function isUsernameTaken(string $username) {
-		## where email = :email protége contre les injections SQL
-		## On sépare la requête des valeurs
+		// Using named parameters prevents SQL injection 
 		$request = 'SELECT id FROM users WHERE username = :username';
 		
-		## On utilise prepare() car on a nos variables dans la requête
+		// prepare() is used to insert variable into query
 		$statement = $this->pdoConnection->prepare($request);
 
-		## On dit à PDO par quoi remplacer email et username
-		## via notre tableau associatif.
-		## Notre PDA va nettoyer les variables et les insérer dans notre requête
+		// execute() binds $username value to :username placeholder
 		$statement->execute([':username' => $username]);
 
-		## On fetch sur notre variable statement
-		## Fetch va aller chercher la premiére ligne de résultat trouvée par la requête
-		## Si fetch trouve qqchose -> l'user ou l'email existe déjà alors return true
-		## Sinon return false
-
+		// fetch() retrieves the first matching row found by the query
 		$result = $statement->fetch();
 		if ($result) {
 			return true;
@@ -41,24 +42,15 @@ class Users {
 		}
 	}
 
+	/**
+	 * Checks if a given email address already exists in the database
+	 */
 	public function isEmailTaken(string $email) {
-		## where email = :email protége contre les injections SQL
-		## On sépare la requête des valeurs
-		$request = 'SELECT id FROM users WHERE email = :email';
-		
-		## On utilise prepare() car on a nos variables dans la requête
-		$statement = $this->pdoConnection->prepare($request);
 
-		## On dit à PDO par quoi remplacer email et username
-		## via notre tableau associatif.
-		## Notre PDA va nettoyer les variables et les insérer dans notre requête
+		$request = 'SELECT id FROM users WHERE email = :email';
+		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':email' => $email]);
 
-		## On fetch sur notre variable statement
-		## Fetch va aller chercher la premiére ligne de résultat trouvée par la requête
-		## Si fetch trouve qqchose -> l'user ou l'email existe déjà alors return true
-		## Sinon return false
-
 		$result = $statement->fetch();
 		if ($result) {
 			return true;
@@ -67,21 +59,24 @@ class Users {
 		}
 	}
 
+	/**
+	 * Inserts new registered user into database
+	 */
 	public function saveUser(string $username, string $email, string $password, string $confirmationToken) {
 		
-		## Insertion du user dans la table
 		$request = 'INSERT INTO users (username, email, password, confirmation_token) VALUES (:username, :email, :password, :confirmationToken)';
-
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':username' => $username, ':email' => $email, ':password' => $password, ':confirmationToken' => $confirmationToken]);
 	}
 
+	/**
+	 * Checks if a user exists by their email
+	 */
 	public function findUserByEmail(string $email) {
 
 		$request = 'SELECT email FROM users WHERE email = :email';
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':email' => $email]);
-
 		$result = $statement->fetch();
 		if ($result) {
 			return true;
@@ -90,16 +85,23 @@ class Users {
 		}
 	}
 
+	/**
+	 * Save token and expiration date for password recovery
+	 */
 	public function saveResetToken(string $email, $token, $expiration) {
+		// Update user with the new generated token and expiration time
 		$request = 'UPDATE users SET reset_token = :token, reset_token_expires_at = :expiration WHERE email = :email';
 
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':token' => $token, ':email' => $email, ':expiration' => $expiration]);
 	}
 
+	/**
+	 * Validate a password reset token
+	 */
 	public function isValidRequestToken($token) {
+		// Check if the token exists & if the current time (now) is before the expiration time
 		$request = 'SELECT reset_token FROM users WHERE reset_token = :reset_token AND reset_token_expires_at > NOW()';
-
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':reset_token' => $token]);
 
@@ -111,19 +113,23 @@ class Users {
 		}
 	}
 
+	/**
+	 * Update user's password and clear recovery tokens
+	 */
 	public function updatePasswordWithToken($token, $hashedPassword) {
 		$request = 'UPDATE users SET password = :hashedPassword, reset_token_expires_at = NULL, reset_token = NULL WHERE reset_token = :token';
-
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':hashedPassword' => $hashedPassword, ':token' => $token]);
 	}
 
+	/**
+	 * Retrieves specific user credentials needed for the login process
+	 */
 	public function getUserByEmail($email) {
 		$request = 'SELECT id, password, confirmed FROM users WHERE email = :email';
-
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':email' => $email]);
-
+		
 		return $statement->fetch();
 	}
 }
