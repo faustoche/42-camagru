@@ -55,7 +55,7 @@ class StudioController {
 				exit();
 			}
 
-			// Préparation de la toile de fond (webcam)
+			// Préparation de la webcam
 			$cleanData = str_replace('data:image/png;base64,', '', $imageData);
 			$result = base64_decode($cleanData);
 			$imageName = uniqid('image') . ".png";

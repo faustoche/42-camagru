@@ -18,8 +18,9 @@ class Router {
 		$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 		if (!isset($this->routes[$method][$path])) {
-			http_response_code(404);
-			echo "404 - Not found";
+			require_once __DIR__ . '/../controllers/NotFoundController.php';
+			$controller = new NotFoundController();
+			$controller->processNotFound();
 			return;
 		}
 

@@ -4,7 +4,10 @@ COMPOSE = $(DOCKER) compose -f ./docker-compose.yml
 all: up
 
 up: build
-	$(COMPOSE) up -d
+	ENABLE_BONUS=0 $(COMPOSE) up -d
+
+bonus: build
+	ENABLE_BONUS=1 $(COMPOSE) up -d
 
 down:
 	$(COMPOSE) down

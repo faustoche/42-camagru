@@ -1,16 +1,15 @@
 <div class="studio-app-wrapper">
 	<div class="studio-app-window">
-
+		<?php
+			$enableBonus = (getenv('ENABLE_BONUS') === '1' || (isset($_SERVER['ENABLE_BONUS']) && $_SERVER['ENABLE_BONUS'] === '1'));
+		?>
 		<aside class="app-left-panel">
-			<div class="app-search-bar">
-				<input type="text" placeholder="Find a sticker ...">
-				<button type="button" class="app-btn-small">OK</button>
-			</div>
-
 			<div class="studio-tabs-container">
 				<div class="tabs-header">
 					<button type="button" class="tab-button active" onclick="switchTab(event, 'stickers-tab')">Stickers</button>
+					<?php if ($enableBonus): ?>
 					<button type="button" class="tab-button" onclick="switchTab(event, 'filters-tab')">Filters</button>
+					<?php endif; ?>
 				</div>
 
 				<div class="tabs-content-wrapper">
@@ -58,6 +57,7 @@
 						</div>
 					</div>
 
+					<?php if ($enableBonus): ?>
 					<div id="filters-tab" class="tab-content">
 						<div class="app-sticker-grid">
 							<?php if (!empty($filters)): ?>
@@ -71,6 +71,7 @@
 							<?php endif; ?>
 						</div>
 					</div>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -177,8 +178,16 @@
 	</div>
 </dialog>
 
-<script defer src="/vendor/face-api/face-api.min.js"></script>
-<script defer src="/js/studio.js"></script>
+<?php if ($enableBonus): ?>
+	<script defer src="/vendor/face-api/face-api.min.js"></script>
+	<script defer src="/js/studio.js"></script>
+<?php else: ?>
+	<script>
+		const activeFilterImage = new Image();
+		activeFilterImage.src = '';
+	</script>
+<?php endif; ?>
+
 <script>
 
 	const video = document.getElementById('video');
