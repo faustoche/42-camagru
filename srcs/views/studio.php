@@ -489,8 +489,20 @@
 		navigator.mediaDevices.getUserMedia({ video: true })
 		.then(function(stream) {
 			video.srcObject = stream;
+			video.play();
 			uploadedImage.style.display = 'none';
 			video.style.display = 'block';
+
+			// Clean stickers + faceapi
+			document.querySelectorAll('.sticker-box').forEach(box => box.remove());
+			activeFilterImage.src = '';
+			const faceOverlay = document.getElementById('faceapi-overlay');
+			if (faceOverlay) {
+				const ctx = faceOverlay.getContext('2d');
+				ctx.clearRect(0, 0, faceOverlay.width, faceOverlay.height);
+			}
+
+			document.querySelector('.app-btn-save').disabled = true;
 
 			const filtersTabBtn = document.querySelector('.tab-button[onclick*="filters-tab"]');
 			if (filtersTabBtn) {
@@ -515,14 +527,28 @@
 				uploadedImage.src = reader.result;
 
 				if (video.srcObject) {
+					window.isTracking = false;
+					video.pause();
 					video.srcObject.getTracks().forEach(track => track.stop());
-
+					video.srcObject = null;
 				}
 
 				video.style.display = 'none';
 				uploadedImage.style.display = 'block';
 
 				activeFilterImage.src = '';
+
+				// Clean stickers + faceapi
+				document.querySelectorAll('.sticker-box').forEach(box => box.remove());
+				const faceOverlay = document.getElementById('faceapi-overlay');
+				if (faceOverlay) {
+					const ctx = faceOverlay.getContext('2d');
+					ctx.clearRect(0, 0, faceOverlay.width, faceOverlay.height);
+				}
+
+				document.querySelector('.app-btn-save').disabled = true;
+
+
 				const stickersTabButton = document.querySelector('.tab-button[onclick*="stickers-tab"]');
 				if (stickersTabButton)
 					stickersTabButton.click();

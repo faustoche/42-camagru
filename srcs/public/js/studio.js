@@ -94,10 +94,25 @@ Promise.all([
 }).catch((err) => {
     console.error("Loading error :", err);
 });
+// Déclaration globale
+window.isTracking = false;
 
 videoElement.addEventListener("playing", () => {
-    if (isTracking) return;
-    isTracking = true;
+    if (window.isTracking) return;
+
+    if (videoElement.videoWidth === 0) {
+        setTimeout(() => {
+            videoElement.dispatchEvent(new Event("playing"));
+        }, 100);
+        return;
+    }
+
+    window.isTracking = true;
+
+    const oldCanvas = document.getElementById('faceapi-overlay');
+    if (oldCanvas) {
+        oldCanvas.remove();
+    }
 
     videoElement.width = videoElement.videoWidth;
     videoElement.height = videoElement.videoHeight;
@@ -109,7 +124,9 @@ videoElement.addEventListener("playing", () => {
     canvas.style.left = '0';
     canvas.style.zIndex = '10';
     canvas.style.pointerEvents = 'none';
-    videoContainer.appendChild(canvas);
+    
+    const videoContainer = document.querySelector('.canvas-placeholder');
+    if (videoContainer) videoContainer.appendChild(canvas);
 
     const offscreenCanvas = document.createElement('canvas');
 
@@ -127,28 +144,28 @@ videoElement.addEventListener("playing", () => {
     offscreenCanvas.height = displaySize.height;
 
     async function detectAndDraw() {
-        if (videoElement.paused || videoElement.ended) {
-            isTracking = false;
+        // Sécurité en début de boucle
+        if (!window.isTracking || videoElement.paused || videoElement.ended || !videoElement.srcObject) {
+            window.isTracking = false;
             return;
         }
 
         try {
-            // On récupère les 68 points du visage
             const detections = await faceapi
                 .detectAllFaces(videoElement, detectorOptions)
                 .withFaceLandmarks();
+
+            // Sécurité post-analyse : on abandonne le dessin si le flux a été coupé entre-temps
+            if (!window.isTracking) return;
 
             const offCtx = offscreenCanvas.getContext("2d");
             offCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
             if (detections && detections.length > 0 && activeFilterImage.src && activeFilterImage.complete && activeFilterImage.naturalWidth > 0) {
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                
-                // On prends le nom actuel de filtre
                 const srcParts = activeFilterImage.src.split('/');
-                const currentFilterName = srcParts[srcParts.length - 1];
+                const currentFilterName = decodeURIComponent(srcParts[srcParts.length - 1]);
                 
-                // On récupère la config du dictionnaire
                 const config = filtersConfig[currentFilterName] || { anchor: 'head', widthRatio: 1.0, offsetY: 0 };
 
                 resizedDetections.forEach(detection => {
@@ -159,35 +176,27 @@ videoElement.addEventListener("playing", () => {
                     const ratio = activeFilterImage.naturalHeight / activeFilterImage.naturalWidth;
                     const filterHeight = filterWidth * ratio;
                     
-                    let x = 0;
-                    let y = 0;
+                    let x = 0; let y = 0;
 
-                    // Calcul des coordonnéés selon les points d'encrage du visage
                     if (config.anchor === 'head') {
-                        // Oreil ou chapeau pour la visage
                         x = box.x - (filterWidth - box.width) / 2;
                         y = box.y + (filterHeight * config.offsetY);
                     } 
                     else if (config.anchor === 'nose') {
-                        // Nez
                         const nose = landmarks.getNose();
-                        const noseTip = nose[3]; // 3 = environ le bout du nez
-                        
+                        const noseTip = nose[3]; 
                         x = noseTip.x - (filterWidth / 2);
                         y = noseTip.y - (filterHeight / 2) + (filterHeight * config.offsetY);
                     } 
                     else if (config.anchor === 'mouth') {
-                        // La bouche pour centré
                         const mouth = landmarks.getMouth();
                         const mouthCenterX = mouth.reduce((sum, pt) => sum + pt.x, 0) / mouth.length;
                         const mouthCenterY = mouth.reduce((sum, pt) => sum + pt.y, 0) / mouth.length;
-                        
                         x = mouthCenterX - (filterWidth / 2);
                         y = mouthCenterY - (filterHeight / 2) + (filterHeight * config.offsetY);
                     }
 
                     const mirroredX = displaySize.width - (x + filterWidth);
-                    // On dessine l'image finale
                     offCtx.drawImage(activeFilterImage, mirroredX, y, filterWidth, filterHeight);
                 });
             }
@@ -197,11 +206,13 @@ videoElement.addEventListener("playing", () => {
             visibleCtx.drawImage(offscreenCanvas, 0, 0);
 
         } catch (e) {
-            console.error("Erreur :", e);
+            // Silencieux en cas de coupure de flux vidéo brutale
         }
 
-        // Le tout dans une boucle pour éviter le trésaillement 
-        requestAnimationFrame(detectAndDraw);
+        // Relance de la boucle seulement si le tracking est toujours autorisé
+        if (window.isTracking) {
+            requestAnimationFrame(detectAndDraw);
+        }
     }
 
     detectAndDraw();
