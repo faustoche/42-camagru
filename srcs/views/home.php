@@ -13,9 +13,9 @@
 		<?php else: ?>
 			<?php foreach ($images as $img): ?>
 				<div class="gallery-item">
-					<img class="home-thumbnail" data-filename="<?= htmlspecialchars($img['filename']) ?>" style="cursor: pointer;"  src="/uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Photo by <?= htmlspecialchars($img['username']) ?>">
-					<div class="overlay" style="pointer-events: none;">
-						<span style="font-size:0.8rem; color:#fff;">
+					<img class="home-thumbnail" data-filename="<?= htmlspecialchars($img['filename']) ?>" src="/uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Photo by <?= htmlspecialchars($img['username']) ?>">
+					<div class="overlay">
+						<span class="overlay-span">
 							★ <?= (int)$img['likes'] ?> &nbsp; by <?= htmlspecialchars($img['username']) ?>
 						</span>
 					</div>
@@ -25,58 +25,58 @@
 
 	</div>
 
-	<div id="scroll-anchor" style="height: 20px; text-align: center; padding: 20px; margin-top: 20px;">
-		<span id="loading-spinner" style="display: none; color: #8e8e8e; font-size: 0.9rem;">Charging more pictures... 📷</span>
+	<div id="scroll-anchor" class="scroll-anchor-container">
+		<span id="loading-spinner" class="loading-spinner-text">Charging more pictures... 📷</span>
 	</div>
 
 </main>
-<dialog id="gallery-modal" style="margin: auto; padding: 0; border-radius: 8px; border: none; max-width: 900px; width: 90vw; height: 60vh; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+<dialog id="gallery-modal" class="home-modal">
 
-	<div id="modal-detail-view" style="display: flex; flex-direction: row; height: 100%;">
+	<div id="modal-detail-view" class="modal-detail-layout">
 		
-		<div style="flex-grow: 1; background-color: #EFEFEF; display: flex; align-items: center; justify-content: center; position: relative;">
+		<div class="modal-image-container">
 			
-			<button type="button" id="button-back" style="position: absolute; left: 15px; background:none; width: 35px; height: 35px; cursor: pointer; font-weight: bold;"><</button>
+			<button type="button" id="button-back" class="modal-nav-btn modal-nav-btn-left"><</button>
 			
-			<img id="detail-large-image" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+			<img id="detail-large-image" class="home-large-image">
 			
-			<button type="button" id="button-next" style="position: absolute; right: 15px; background:none; width: 35px; height: 35px; cursor: pointer; font-weight: bold;">></button>
+			<button type="button" id="button-next" class="modal-nav-btn modal-nav-btn-right">></button>
 			
 		</div>
 
-		<div style="width: 350px; min-width: 350px; display: flex; flex-direction: column; background: #fff; border-left: 1px solid #efefef;">
+		<div class="modal-sidebar">
 			
-			<div style="padding: 15px; border-bottom: 1px solid #efefef; display: flex; justify-content: space-between; align-items: center;">
-				<div id="modal-header-info" style="font-size: 0.85rem; color: #8e8e8e;">
+			<div class="modal-header-section">
+				<div id="modal-header-info" class="modal-header-info-text">
 					</div>
-				<button type="button" id="button-close-modal" style="background: none; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: #262626;">✕</button>
+				<button type="button" id="button-close-modal" class="btn-close-modal">✕</button>
 			</div>
 
-			<div id="comments-container" style="flex-grow: 1; overflow-y: auto; padding: 15px; word-wrap: break-word; overflow-wrap: break-word; display:flex; flex-direction: column;">
-				<div style="text-align:center;">
+			<div id="comments-container" class="comments-container-box">
+				<div class="comment-date-placeholder">
 					Posted by user145341 on January 16th 2026
 				</div>
 
-				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; font-size: 0.95rem;">
-					<span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">💬</span>
+				<div id="no-comments-msg" class="no-comments-msg-box">
+					<span class="no-comments-icon">💬</span>
 					No comments yet. Be the first one to add a comment!
 				</div>
 
 			</div>
 
-			<div style="padding: 15px; border-top: 1px solid #efefef; display: flex; align-items: center; gap: 10px;">
-				<img id="btn-like" src="/assets/heart.png" style="width: 28px; <?= isset($_SESSION['user_id']) ? 'cursor: pointer;' : 'cursor: default;' ?>" alt="Like">
-				<p id="like-count-text" style="margin: 0; font-weight: 600; color: #262626;">0 likes</p>
+			<div class="modal-like-section">
+				<img id="btn-like" class="like-icon-img" src="/assets/heart.png" style="<?= isset($_SESSION['user_id']) ? 'cursor: pointer;' : 'cursor: default;' ?>" alt="Like">
+				<p id="like-count-text" class="like-count-text-style">0 likes</p>
 			</div>
 
 			<?php if (isset($_SESSION['user_id'])): ?>
-				<div style="padding: 15px; border-top: 1px solid #efefef; display: flex; gap: 10px;">
-					<input type="text" id="comment-input" placeholder="Add a comment..." style="border: none; outline: none; flex-grow: 1; font-size: 0.95rem;">
-					<button type="button" id="btn-send-comment" style="color: #0095f6; background: none; border: none; font-weight: 600; cursor: pointer;">Post</button>
+				<div class="modal-comment-input-section">
+					<input type="text" id="comment-input" class="comment-input-box" placeholder="Add a comment...">
+					<button type="button" id="btn-send-comment" class="btn-send-comment-style">Post</button>
 				</div>
 			<?php else: ?>
-				<div style="padding: 15px; border-top: 1px solid #efefef; text-align: center;">
-					<p style="margin: 0; font-size: 0.9rem; color: #8e8e8e;">Log in to like and comment.</p>
+				<div class="login-prompt-box">
+					<p class="login-prompt-text">Log in to like and comment.</p>
 				</div>
 			<?php endif; ?>
 
@@ -86,7 +86,9 @@
 
 <script>
 
-
+	/**
+	 * Fetch and display likes and comments for a specific image
+	 */
 	function loadSocialData(filename) {
 		if (!filename) return;
 
@@ -135,6 +137,9 @@
 		})
 	}
 
+	/**
+	 * Handle like button, updating UI immediately and sending request to server
+	 */
 	document.getElementById('btn-like').addEventListener('click', function() {
 		if (!currentEditingImage) return;
 
@@ -175,11 +180,14 @@
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ 
 				filename: currentEditingImage,
-				csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+				csrf_token: document.getElementById('csrf_token').value 
 			})
 		});
 	});
 
+	/**
+	 * Handle new comment
+	 */
 	const btnSend = document.getElementById('btn-send-comment');
 		if (btnSend) {
 			btnSend.addEventListener('click', function() {
@@ -194,21 +202,22 @@
 					body: JSON.stringify({ 
 						filename: currentEditingImage, 
 						content: text,
-						csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+						csrf_token: document.getElementById('csrf_token').value 
 					})
 				})
 				.then(response => response.json())
 				.then(data => {
 					if (data.status === 'success') {
-						input.value = ''; // On vide le champ
-						loadSocialData(currentEditingImage); // On recharge la liste des commentaires
+						input.value = '';
+						loadSocialData(currentEditingImage);
 					}
 				});
 			});
 		}
 
-		//? OUVERTURE DE LA MODALE POUR VOIR CHAQUE PHOTO SUR LA GRILLE
-
+	/**
+	 * Modal to view images from the grid
+	 */
 	let currentEditingImage = '';
 	const galleryModal = document.getElementById('gallery-modal');
 	const thumbnails = document.querySelectorAll('.home-thumbnail');
@@ -216,25 +225,27 @@
 
 	thumbnails.forEach(thumb => {
 		thumb.addEventListener('click', function() {
-			// On lit l'adresse de l'image cliquée et son nom de fichier
+
+			// Read source and filename of clicked image
 			const imageSrc = this.src;
 			currentEditingImage = this.getAttribute('data-filename');
 
-			// On met à jour la grande image
+			// Update modal image
 			detailLargeImage.src = imageSrc;
 
-			// Bascule visuelle
+			// Show modal and load social data
 			galleryModal.showModal();
 			loadSocialData(currentEditingImage);
 		});
 	});
 
-		//? FERMETURE DE LA MODALE
-
+	/**
+	 * Closing the modal
+	 */
 	const buttonClose = document.getElementById('button-close-modal');
 
 	buttonClose.addEventListener('click', function() {
-		galleryModal.close(); // On ferme le <dialog>
+		galleryModal.close(); 
 	});
 
 	galleryModal.addEventListener('click', function(event) {
@@ -244,8 +255,9 @@
 	});
 
 
-		//? CLIC GAUCHE ET CLIC DROIT POUR CHANGER DE PHOTO
-
+	/**
+	 * Navigation inside the modal
+	 */
 	const buttonBackModal = document.getElementById('button-back');
 	const buttonNextModal = document.getElementById('button-next');
 
@@ -279,8 +291,9 @@
 	});
 
 
-		//? FLÈCHE GAUCHE ET FLÈCHE DROITE POUR CHANGER DE PHOTO
-
+	/**
+	 * Keyboard navigation
+	 */
 	document.addEventListener('keydown', function(event) {
 		if (galleryModal.open) {
 			if (event.key === 'ArrowLeft') {
@@ -300,8 +313,9 @@
 	})
 
 
-	//? PAGINATION INFINIE
-
+	/**
+	 * Infinite pagination
+	 */
 	let currentPage = 1;
 	let isFetching = false;
 	let hasMore = true;
@@ -310,13 +324,13 @@
 	const grid = document.querySelector('.gallery-grid');
 	const loadingSpinner = document.getElementById('loading-spinner');
 
-	// On configure un truc pour observer la gallery
+	// Setup an observer to trigger loading more images
 	const observer = new IntersectionObserver((entries) => {
 		if (entries[0].isIntersecting && !isFetching && hasMore) {
 			loadMoreImages();
 		}
 	}, { 
-		rootMargin: "200px" // 200px avant le chargement
+		rootMargin: "200px" // Trigger loading 200px before reaching the end
 	});
 
 	if (anchor) {

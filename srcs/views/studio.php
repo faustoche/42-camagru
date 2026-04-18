@@ -34,9 +34,9 @@
 						}
 						?>
 						
-						<div class="sticker-filter-container" style="margin-bottom: 15px; text-align: center;">
-							<label for="sticker-category" style="font-weight: bold; font-size: 0.9rem;">Category : </label>
-							<select id="sticker-category" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #dbdbdb;">
+						<div class="sticker-filter-container">
+							<label for="sticker-category" class="sticker-category-label">Category : </label>
+							<select id="sticker-category" class="sticker-category-select">
 								<option value="all">All</option>
 								<?php foreach ($categories as $cat): ?>
 									<option value="<?= htmlspecialchars($cat) ?>"><?= ucfirst(htmlspecialchars($cat)) ?></option>
@@ -103,12 +103,12 @@
 			</div>
 
 			<div class="app-canvas-area">
-				<div class="canvas-placeholder" style="position: relative;">
-					<video id="video" autoplay style="max-width: 100%; border-radius: 8px; transform: scaleX(-1);"></video>
-					<img id="uploaded-image" style="max-width: 100%; border-radius: 8px; display:none">
+				<div class="canvas-placeholder">
+					<video id="video" class="video-stream-box" autoplay></video>
+					<img id="uploaded-image" class="uploaded-image-box">
 					
 					<canvas id="canvas" style="display:none;"></canvas>
-					<div id="countdown-overlay" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; font-weight: bold; color: white; text-shadow: 0px 0px 20px rgba(0,0,0,0.8); z-index: 100; pointer-events: none; font-family: 'Bebas Neue', sans-serif;"></div>
+					<div id="countdown-overlay" class="countdown-overlay-box"></div>
 
 				</div>
 			</div>
@@ -127,7 +127,7 @@
 						<?php else: ?>
 							<?php foreach ($userImages as $img): ?>
 								<div class="app-shot-item">
-									<img src="/uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Shot" class="shot-thumbnail" data-filename="<?= htmlspecialchars($img['filename']) ?>" data-published="<?= $img['is_published'] ? '1' : '0' ?>" style="cursor: pointer;">
+									<img src="/uploads/<?= htmlspecialchars($img['filename']) ?>" alt="Shot" class="shot-thumbnail shot-thumbnail-img" data-filename="<?= htmlspecialchars($img['filename']) ?>" data-published="<?= $img['is_published'] ? '1' : '0' ?>">
 								</div>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -139,39 +139,39 @@
 	</div>
 </div>
 
-<dialog id="gallery-modal" style="margin: auto; padding: 20px; border-radius: 8px; border: none; max-width: 80vw;">
-	<div style="border-bottom: 1px solid #efefef; display: flex; justify-content: space-between; align-items: center;">
-		<h3 style="margin-top: 0; text-align: center;">My gallery</h3>
-		<button type="button" id="button-close-modal" style="background: none; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: #262626;">✕</button>
+<dialog id="gallery-modal" class="studio-modal-box">
+	<div class="studio-modal-header">
+		<h3 class="studio-modal-title">My gallery</h3>
+		<button type="button" id="button-close-modal" class="btn-close-modal">✕</button>
 	</div>
 
-	<div id="modal-detail-view" style="text-align: center;">
+	<div id="modal-detail-view" class="studio-modal-detail-view">
 		<br>
-		<div style="background-color: #EFEFEF; display: flex; align-items: center; justify-content: center; position: relative;">
+		<div class="modal-image-container">
 
 
-			<button type="button" id="button-back" style="position: absolute; left: 15px; background:none; width: 35px; height: 35px; cursor: pointer; font-weight: bold;"><</button>
-			<img id="detail-large-image" style="max-width: 100%; max-height: 50vh; border-radius: 8px;">
-			<button type="button" id="button-next" style="position: absolute; right: 15px; background:none; width: 35px; height: 35px; cursor: pointer; font-weight: bold;">></button>
+			<button type="button" id="button-back" class="modal-nav-btn modal-nav-btn-left"><</button>
+			<img id="detail-large-image" class="studio-large-image">
+			<button type="button" id="button-next" class="modal-nav-btn modal-nav-btn-right">></button>
 
 		</div>
 
 		
-		<div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+		<div class="studio-modal-actions">
 			<button type="button" id="btn-publish" class="gallery-button">Publish</button>
 			<button type="button" id="btn-unpublish" class="unpublish-button">Unpublish</button>
 			<button type="button" id="btn-share" class="gallery-button">Share</button>
 			<button type="button" id="btn-delete" class="gallery-button">Delete</button>
 		</div>
 
-		<div id="share-networks" style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
-			<button type="button" id="btn-twitter" style="border: none; background: none; cursor: pointer;">
+		<div id="share-networks" class="share-networks-box">
+			<button type="button" id="btn-twitter" class="btn-share-network">
 				<img src="/assets/twitter.png" alt="Twitter" width="32" height="32">
 			</button>
-			<button type="button" id="btn-facebook" style="border: none; background: none; cursor: pointer;">
+			<button type="button" id="btn-facebook" class="btn-share-network">
 				<img src="/assets/facebook.png" alt="Facebook" width="32" height="32">
 			</button>
-			<button type="button" id="btn-pinterest" style="border: none; background: none; cursor: pointer;">
+			<button type="button" id="btn-pinterest" class="btn-share-network">
 				<img src="/assets/pinterest.png" alt="Pinterest" width="32" height="32">
 			</button>
 		</div>
@@ -190,6 +190,9 @@
 
 <script>
 
+	/**
+	 * Request access to user camera
+	 */
 	const video = document.getElementById('video');
 	
 	navigator.mediaDevices.getUserMedia({ video: true })
@@ -201,7 +204,9 @@
 			alert("Cannot access camera. Please autorize access in your navigator.");
 		});
 	
-
+	/**
+	 * Modal mavigation
+	 */
 	const buttonBackModal = document.getElementById('button-back');
 	const buttonNextModal = document.getElementById('button-next');
 
@@ -210,12 +215,14 @@
 		const thumbnail = document.querySelectorAll('.shot-thumbnail');
 		const index = Array.from(thumbnail).findIndex(image => image.getAttribute('data-filename') == currentEditingImage);
 
+		// Check if there is a previous image in the array
 		if (index > 0) {
 			const target = thumbnail[index - 1];
 			const detailLargeImage = document.getElementById('detail-large-image');
 			detailLargeImage.src = target.src;
 			currentEditingImage = target.getAttribute('data-filename');
 
+			// Update button based on publication statuts
 			const isPublished = target.getAttribute('data-published');
 			if (isPublished === '1') {
 				publishButton.style.display = 'none';
@@ -232,7 +239,8 @@
 		const thumbnail = document.querySelectorAll('.shot-thumbnail');
 		const index = Array.from(thumbnail).findIndex(image => image.getAttribute('data-filename') == currentEditingImage);
 
-		if (index >= 0) {
+		// Check if there is a next image in the array
+		if (index >= 0 && index < thumbnail.length - 1) {
 			const target = thumbnail[index + 1];
 			const detailLargeImage = document.getElementById('detail-large-image');
 			detailLargeImage.src = target.src;
@@ -249,7 +257,9 @@
 		}
 	});
 
-	////// BUTTONS IN THE GALLERY
+	/**
+	 * Share, publish, delete
+	 */
 	const publishButton = document.getElementById('btn-publish');
 	const unpublishButton = document.getElementById('btn-unpublish');
 	const shareButton = document.getElementById('btn-share');
@@ -259,7 +269,7 @@
 		if (!currentEditingImage)
 			return ;
 
-		// ne va pas fonctionner à cause de localhost mais on peut tester avec une vraie image
+		// Will not work with localhost, but works with any other url
 		const urlImage = "http://localhost:8080/uploads/" + currentEditingImage;
 		const sharedNetworks = document.getElementById('share-networks');
 		const sharedTwitter = document.getElementById('btn-twitter');
@@ -282,8 +292,7 @@
 	});
 
 
-	//? PUBLISH PICTURE
-
+	// PUBLISH LOGIC
 	publishButton.addEventListener('click', function() {
 		if (!currentEditingImage)
 			return ;
@@ -300,16 +309,15 @@
 			.then(response => response.json())
 			.then (data => {
 				if (data.status === 'success') {
-
+					// Toggle button visibility immediately
 					publishButton.style.display = 'none';
 					unpublishButton.style.display = 'inline-block';
 
+					// Update the HTML in the background list
 					const targetThumb = document.querySelector(`.shot-thumbnail[data-filename="${currentEditingImage}"]`);
 					if (targetThumb) {
 						targetThumb.setAttribute('data-published', '1');
 					}
-	
-					//galleryModal.close();
 					alert('Your photo is now public! Other users can like and comment.');
 				}
 			});
@@ -317,8 +325,7 @@
 		}
 	});
 
-	//? UNPUBLISH PICTURE
-
+	// UNPUBLISH LOGIC
 	unpublishButton.addEventListener('click', function() {
 		if (!currentEditingImage)
 			return ;
@@ -335,7 +342,6 @@
 			.then(response => response.json())
 			.then (data => {
 				if (data.status === 'success') {
-
 					unpublishButton.style.display = 'none';
 					publishButton.style.display = 'inline-block';
 
@@ -343,8 +349,6 @@
 					if (targetThumb) {
 						targetThumb.setAttribute('data-published', '0');
 					}
-	
-					//galleryModal.close();
 					alert('Your photo is now private. Nobody can see it, except you!');
 				}
 			});
@@ -353,9 +357,7 @@
 	});
 
 
-
-	//? DELETE PICTURE
-
+	// DELETE LOGIC
 	deleteButton.addEventListener('click', function() {
 		if (!currentEditingImage)
 			return ;
@@ -376,34 +378,32 @@
 			.then(data => {
 				if (data.status === 'success') {
 					
-					// 1. Trouver toutes les miniatures actuelles et l'index de celle qu'on supprime
+					// Find current thumbnails and index of the one being deleted
 					const thumbnails = Array.from(document.querySelectorAll('.shot-thumbnail'));
 					const currentIndex = thumbnails.findIndex(img => img.getAttribute('data-filename') == currentEditingImage);
 					
-					// 2. Déterminer quelle sera la prochaine image à afficher
+					// Check which image to show next
 					let nextThumb = null;
 					if (currentIndex < thumbnails.length - 1) {
-						// Il y a une image SUIVANTE
 						nextThumb = thumbnails[currentIndex + 1];
 					} else if (currentIndex > 0) {
-						// C'était la dernière image, donc on prend la PRÉCÉDENTE
 						nextThumb = thumbnails[currentIndex - 1];
 					}
 
-					// 3. Supprimer l'image du DOM (de la grille de fond)
+					// Remove image
 					const imageToTrash = document.querySelector('.shot-thumbnail[data-filename="' + currentEditingImage + '"]');
 					if (imageToTrash) {
 						imageToTrash.closest('.app-shot-item').remove();
 					}
 
-					// 4. Mettre à jour la modale
+					// Update modal state
 					if (nextThumb) {
-						// Afficher la nouvelle image
+						// Show replacement image
 						const detailLargeImage = document.getElementById('detail-large-image');
 						detailLargeImage.src = nextThumb.src;
 						currentEditingImage = nextThumb.getAttribute('data-filename');
 
-						// Mettre à jour l'affichage des boutons Publish/Unpublish pour la nouvelle image
+						// Sync button states
 						const isPublished = nextThumb.getAttribute('data-published');
 						if (isPublished === '1') {
 							publishButton.style.display = 'none';
@@ -413,11 +413,9 @@
 							unpublishButton.style.display = 'none';
 						}
 					} else {
-						// Il n'y a plus aucune photo, on ferme la modale
 						galleryModal.close();
 						currentEditingImage = '';
 						
-						// Optionnel : remettre le message "No photos yet" dans le panneau latéral
 						const gallery = document.querySelector('.app-shots-grid');
 						if (gallery && gallery.children.length === 0) {
 							gallery.innerHTML = '<div class="empty-dropzone"><p>No photos yet</p></div>';
@@ -431,36 +429,33 @@
 		}
 	});
 
-
-	 /////// MODALE D'OUVERTURE DE LA GALERIE 
+	/**
+	 * Modal opening
+	 */
 	const galleryModal = document.getElementById('gallery-modal');
 	const buttonClose = document.getElementById('button-close-modal');
 
 	buttonClose.addEventListener('click', function() {
-		galleryModal.close(); // On ferme le <dialog>
+		galleryModal.close();
 	});
 
+	// Close modal when clicking outside
 	galleryModal.addEventListener('click', function(event) {
 		if (event.target === galleryModal) {
 			galleryModal.close();
 		}
 	});
 
-
-	// Qu'est-ce qu'on est en train de regarder actuellement?
 	let currentEditingImage = '';
 
-	// On attache un événement de clic à chaque miniature de la grille
 	const thumbnails = document.querySelectorAll('.shot-thumbnail');
 	const detailLargeImage = document.getElementById('detail-large-image');
 
 	thumbnails.forEach(thumb => {
 		thumb.addEventListener('click', function() {
-			// On lit l'adresse de l'image cliquée et son nom de fichier
 			const imageSrc = this.src;
 			currentEditingImage = this.getAttribute('data-filename');
 
-			// On met à jour la grande image
 			detailLargeImage.src = imageSrc;
 
 			const isPublished = this.getAttribute('data-published');
@@ -472,18 +467,19 @@
 				unpublishButton.style.display = 'none';
 			}
 
-			// Bascule visuelle
 			galleryModal.showModal();
 		});
 	});
 
+	/**
+	 * Webcam and upload image
+	 */
 	const uploadedImage = document.getElementById('uploaded-image');
 	const webcamButton = document.getElementById('button-webcam');
 	const captureButton = document.querySelector('.app-btn-save');
 
-
+	// Switch to webcam mode
 	webcamButton.addEventListener('click', function() {
-		
 		upload.value = '';
 		
 		navigator.mediaDevices.getUserMedia({ video: true })
@@ -493,7 +489,7 @@
 			uploadedImage.style.display = 'none';
 			video.style.display = 'block';
 
-			// Clean stickers + faceapi
+			// Clean stickers or filters
 			document.querySelectorAll('.sticker-box').forEach(box => box.remove());
 			activeFilterImage.src = '';
 			const faceOverlay = document.getElementById('faceapi-overlay');
@@ -502,8 +498,10 @@
 				ctx.clearRect(0, 0, faceOverlay.width, faceOverlay.height);
 			}
 
+			// Disable capture button
 			document.querySelector('.app-btn-save').disabled = true;
 
+			// enable the filters tab
 			const filtersTabBtn = document.querySelector('.tab-button[onclick*="filters-tab"]');
 			if (filtersTabBtn) {
 				filtersTabBtn.disabled = false;
@@ -517,8 +515,8 @@
 		});
 	})
 
+	// uploaded image mode
 	const upload = document.querySelector('input[name="userfile"]');
-
 	upload.addEventListener('change', function() {
 		if (this.files[0]) {
 			const reader = new FileReader();
@@ -526,6 +524,7 @@
 				
 				uploadedImage.src = reader.result;
 
+				// Stop the webcam stream to save cpu and ressources 
 				if (video.srcObject) {
 					window.isTracking = false;
 					video.pause();
@@ -533,12 +532,12 @@
 					video.srcObject = null;
 				}
 
+				// Swap visibility
 				video.style.display = 'none';
 				uploadedImage.style.display = 'block';
 
+				// Clean stickers or filters
 				activeFilterImage.src = '';
-
-				// Clean stickers + faceapi
 				document.querySelectorAll('.sticker-box').forEach(box => box.remove());
 				const faceOverlay = document.getElementById('faceapi-overlay');
 				if (faceOverlay) {
@@ -546,9 +545,10 @@
 					ctx.clearRect(0, 0, faceOverlay.width, faceOverlay.height);
 				}
 
+				// Disable capture button 
 				document.querySelector('.app-btn-save').disabled = true;
 
-
+				// UI back to the sticekrs tab (no filter on upload image)
 				const stickersTabButton = document.querySelector('.tab-button[onclick*="stickers-tab"]');
 				if (stickersTabButton)
 					stickersTabButton.click();
@@ -562,44 +562,44 @@
 			}
 			
 			reader.readAsDataURL(this.files[0]);
-
 		}
 	})
 
+	/**
+	 * Sticker interaction
+	 */
 	const canvasPlaceholder = document.querySelector('.canvas-placeholder');
 	canvasPlaceholder.style.overflow = 'hidden';
 
 	const stickerItems = document.querySelectorAll('.app-sticker-item');
 
-
 	stickerItems.forEach(item => {
 		item.addEventListener('click', function() {
-
+			// need webcam or upload before adding a sticker
 			if (!video.srcObject && uploadedImage.style.display !== 'block') {
 				alert("Please authorize camera's access or upload a picture before adding a sticker.");
 				return;
 			}
-			const stickerFile = this.getAttribute('data-sticker');
 			
-			// 1. Désélectionner tous les autres stickers présents sur le canvas
+			const stickerFile = this.getAttribute('data-sticker');
 			document.querySelectorAll('.sticker-box').forEach(box => box.classList.remove('selected'));
 
-			// 2. Création du conteneur principal
+			// wrapper for the new sticker
 			const newBox = document.createElement('div');
-			newBox.className = 'sticker-box selected'; // Sélectionné par défaut à l'apparition
+			newBox.className = 'sticker-box selected'; 
 			newBox.style.position = 'absolute';
 			newBox.style.top = '0px';
 			newBox.style.left = '0px';
 			newBox.style.zIndex = '10';
 
-			// Variables de transformation (Position, Angle, Échelle)
-			let tX = canvasPlaceholder.clientWidth / 2 - 60; // Centre de la vidéo
+			// center on screen
+			let tX = canvasPlaceholder.clientWidth / 2 - 60; 
 			let tY = canvasPlaceholder.clientHeight / 2 - 60;
 			let angle = 0;
 			let scale = 1;
 
 			newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
-			newBox.dataset.angle = angle; // On stocke l'angle dans le HTML pour l'envoi au serveur plus tard
+			newBox.dataset.angle = angle; // need to store angle in HTML for backend processing
 
 			const newImg = document.createElement('img');
 			newImg.src = '/stickers/' + stickerFile;
@@ -607,11 +607,11 @@
 			newImg.style.height = '100%';
 			newImg.style.pointerEvents = 'none';
 
-			// poigne pour rotation et angle
 			const content = document.createElement('div');
 			content.className = 'sticker-content';
 			newBox.appendChild(newImg);
 
+			// handles and rotation
 			['tl', 'tr', 'bl', 'br', 'rotate'].forEach(type => {
 				const h = document.createElement('div');
 				h.className = `sticker-handle handle-${type}`;
@@ -620,26 +620,27 @@
 			});
 			canvasPlaceholder.appendChild(newBox);
 
-			// Ajustement de la taille de base respectant le ratio de l'image
+			// keep the ratio
 			newImg.onload = function() {
 				const ratio = newImg.naturalWidth / newImg.naturalHeight;
 				newBox.style.width = '120px';
 				newBox.style.height = (120 / ratio) + 'px';
-				tY = canvasPlaceholder.clientHeight / 2 - (120 / ratio) / 2; // Réajustement du centre Y exact
+				tY = canvasPlaceholder.clientHeight / 2 - (120 / ratio) / 2;
 				newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
 			};
 
-			// 4. Moteur d'interactions
+			// mouse event
 			newBox.addEventListener('mousedown', function(e) {
-				e.stopPropagation(); // Empêche le clic de se propager au document
+				e.stopPropagation();
 				
-				// Remettre la sélection sur le sticker cliqué
+				// Select the sticker
 				document.querySelectorAll('.sticker-box').forEach(box => box.classList.remove('selected'));
 				newBox.classList.add('selected');
 
 				const startClientX = e.clientX;
 				const startClientY = e.clientY;
 
+				// Check if a specific handle was clicked
 				if (e.target.classList.contains('sticker-handle')) {
 					const type = e.target.dataset.type;
 					const rect = newBox.getBoundingClientRect();
@@ -647,7 +648,7 @@
 					const centerY = rect.top + rect.height / 2;
 					
 					if (type === 'rotate') {
-						// ratoation
+						// Rotation using arctangent calculation
 						const startMouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
 						const startAngle = angle;
 						
@@ -656,22 +657,22 @@
 							const angleDiff = (currentMouseAngle - startMouseAngle) * (180 / Math.PI);
 							angle = startAngle + angleDiff;
 							newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
-							newBox.dataset.angle = angle; // Mise à jour de la donnée
+							newBox.dataset.angle = angle; 
 						};
 					} else {
-						// agrandissemnt
+						// Scaling using hypotenuse calculation
 						const startScale = scale;
 						const startDist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
 						
 						document.onmousemove = function(moveEvent) {
 							const currentDist = Math.hypot(moveEvent.clientX - centerX, moveEvent.clientY - centerY);
 							scale = startScale * (currentDist / startDist);
-							if (scale < 0.2) scale = 0.2; // Taille minimum imposée
+							if (scale < 0.2) scale = 0.2;
 							newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
 						};
 					}
 				} else {
-					// deplacement
+					// movement
 					const startX = tX;
 					const startY = tY;
 					
@@ -682,17 +683,19 @@
 					};
 				}
 
-				// Libérer les événements au relâchement de la souris
+				// Clean event listeners on mouse release
 				document.onmouseup = function() {
 					document.onmousemove = null;
 					document.onmouseup = null;
 				};
 			});
 
+			// Enable capture button
 			captureButton.disabled = false;
 		});
 	});
 
+	// Deselect sticker when clicking anywhere else
 	document.addEventListener('mousedown', function(e) {
 		if (e.target.closest('#remove-button'))
 			return;
@@ -701,6 +704,9 @@
 		}
 	});
 
+	/**
+	 * Capture and send via ajax
+	 */
 	const canvas = document.getElementById('canvas');
 	const context = canvas.getContext('2d');
 	const hiddenInput = document.getElementById('image_data');
@@ -708,8 +714,9 @@
 
 	captureButton.addEventListener('click', function(event) {
 		event.preventDefault();
-
 		captureButton.disabled = true;
+
+		// webcam or upload
 		const imageCaptured = document.getElementById('uploaded-image');
 		let activeElem;
 		let realWidth;
@@ -725,8 +732,8 @@
 			realHeight = activeElem.videoHeight;
 		}
 
+		// countdown
 		let timeout = 3;
-
 		const countdownOverlay = document.getElementById('countdown-overlay');
 		countdownOverlay.style.display = 'block';
 		countdownOverlay.innerHTML = timeout;
@@ -738,31 +745,35 @@
 			}
 		}, 1000);
 
+		// execution of capture after countdown
 		setTimeout(() => {
 			clearInterval(intervalId);
 			countdownOverlay.style.display = 'none';
+			
 			canvas.width = realWidth;
 			canvas.height = realHeight;
 
 			context.save();
 
+			// mirror picture
 			if (activeElem === video) {
 				context.translate(realWidth, 0);
 				context.scale(-1, 1);
 			}
 
-			// inversion horizontale
 			context.drawImage(activeElem, 0, 0, realWidth, realHeight);
-
 			context.restore();
+
+			// for face filter to be included
 			const faceOverlay = document.getElementById('faceapi-overlay');
 			if (faceOverlay) {
 				context.drawImage(faceOverlay, 0, 0, realWidth, realHeight);
 			}
 			
-
+			// Store base image in form
 			hiddenInput.value = canvas.toDataURL('image/png');
 	
+			// Calculate scale ratio
 			let renderedWidth, renderedHeight, renderedLeft, renderedTop;
 			const activeRect = activeElem.getBoundingClientRect();
 
@@ -791,6 +802,7 @@
 			const widthRatio = realWidth / renderedWidth;
 			const heightRatio = realHeight / renderedHeight;
 			
+			// Collect metadata for all positioned stickers
 			let stickersArray = [];
 			const allStickers = document.querySelectorAll('.sticker-box');
 	
@@ -804,6 +816,7 @@
 				const exactDiffX = boxRect.left - renderedLeft;
 				const exactDiffY = boxRect.top - renderedTop;
 	
+				// Map CSS coordinates to original image scale
 				let finalX = exactDiffX * widthRatio;
 				const finalY = exactDiffY * heightRatio;
 				const finalWidth = boxRect.width * widthRatio;
@@ -819,25 +832,23 @@
 				});
 			});
 	
-			// Conversion en texte pour le PHP
 			document.getElementById('stickers_data').value = JSON.stringify(stickersArray);
 	
 			const gallery = document.querySelector('.app-shots-grid');
 			const empty_dropzone = document.querySelector('.empty-dropzone');
 			
-
-			// Envoi silencieux au serveur
 			fetch('/studio/capture', {
 				method: "POST",
 				body: new FormData(form)
 			})
 			.then(response => response.json())
 			.then(data => {
-				console.log("Serveur :", data);
+				// clean after capture
 				allStickers.forEach(box => box.remove());
 				activeFilterImage.src = '';
 				captureButton.disabled = true;
 				
+				// Add new image to the gallery
 				const newDiv = document.createElement("div");
 				const img = document.createElement("img");
 				img.className = "shot-thumbnail";
@@ -860,17 +871,15 @@
 				if (empty_dropzone)
 					empty_dropzone.remove();
 				gallery.prepend(newDiv);
-
-				
 			})
 			.catch(error => console.error("Request error :", error));
 			
 		}, 3000);
-
-
-		
 	});
 
+	/**
+	 * Navigation
+	 */
 	document.addEventListener('keydown', function(event) {
 		if (galleryModal.open) {
 			if (event.key === 'ArrowLeft') {
@@ -881,27 +890,23 @@
 		}
 	});
 
-	// ==========================================
-	// GESTION DES ONGLETS (NAVIGATEUR)
-	// ==========================================
+	// Stickers and filters tabs 
 	function switchTab(event, tabId) {
 		event.preventDefault();
 
-		// 1. Masquer tous les contenus via la classe CSS
 		document.querySelectorAll('.tab-content').forEach(content => {
 			content.classList.remove('active');
 		});
 
-		// 2. Désactiver tous les boutons
 		document.querySelectorAll('.tab-button').forEach(button => {
 			button.classList.remove('active');
 		});
 
-		// 3. Activer le bouton cliqué et son contenu
 		document.getElementById(tabId).classList.add('active');
 		event.currentTarget.classList.add('active');
 	}
 
+	// Handles category filtering for stickers
 	document.getElementById('sticker-category').addEventListener('change', function() {
 		const selectedCategory = this.value;
 		const allStickerItems = document.querySelectorAll('.app-sticker-item');
@@ -917,44 +922,41 @@
 		});
 	});
 
-// ==========================================
-// GESTION DES FILTRES (Liée à face-api.js)
-// ==========================================
-const filterItems = document.querySelectorAll('.app-filter-item');
+	// Handle filter selection
+	const filterItems = document.querySelectorAll('.app-filter-item');
 
-filterItems.forEach(item => {
-	item.addEventListener('click', function() {
+	filterItems.forEach(item => {
+		item.addEventListener('click', function() {
 
-		if (!video.srcObject && uploadedImage.style.display !== 'block') {
-			alert("Please authorize camera's access or upload a picture before adding a sticker.");
-			return;
-		}
-		const filterFile = this.getAttribute('data-filter');
-		
-		// Au lieu de créer un élément HTML, on met à jour la source de l'image
-		// que face-api.js est en train d'utiliser en temps réel
-		activeFilterImage.src = '/filters/' + filterFile;
+			if (!video.srcObject && uploadedImage.style.display !== 'block') {
+				alert("Please authorize camera's access or upload a picture before adding a sticker.");
+				return;
+			}
+			const filterFile = this.getAttribute('data-filter');
+			
+			// live rendering
+			activeFilterImage.src = '/filters/' + filterFile;
 
-		// On active le bouton pour prendre la photo
-		document.querySelector('.app-btn-save').disabled = false;
+			document.querySelector('.app-btn-save').disabled = false;
+		});
 	});
-});
 
-const removeButton = document.getElementById('remove-button');
-removeButton.addEventListener('click', function() {
-	
-	const selectedSticker = document.querySelector('.sticker-box.selected');
+	// Removing selected stickers or filters
+	const removeButton = document.getElementById('remove-button');
+	removeButton.addEventListener('click', function() {
+		
+		const selectedSticker = document.querySelector('.sticker-box.selected');
 
-	if (selectedSticker) {
-		selectedSticker.remove();
-		console.log("ici");
-	} else {
-		activeFilterImage.src = '';
-	}
+		if (selectedSticker) {
+			selectedSticker.remove();
+		} else {
+			activeFilterImage.src = ''; // Clear filter if no sticker is selected
+		}
 
-	const remainingStickers = document.querySelectorAll('.sticker-box');
-	if (remainingStickers.length === 0 && (!activeFilterImage.src || activeFilterImage.src === ''))
-		document.querySelector('.app-btn-save').disabled = true;
-});
+		// Disable capture button if canvas is empty
+		const remainingStickers = document.querySelectorAll('.sticker-box');
+		if (remainingStickers.length === 0 && (!activeFilterImage.src || activeFilterImage.src === ''))
+			document.querySelector('.app-btn-save').disabled = true;
+	});
 
 </script>

@@ -1,11 +1,11 @@
 <div class="form-wrapper">
 	<div class="form-card">
 
-		<h1 style="text-align: center; padding-bottom: 20px;">My profile</h1>
+		<h1 class="profile-title-text">My profile</h1>
 
 		<?php if (isset($_GET['error'])): ?>
 
-			<div style="color: #d9534f; background-color: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+			<div class="alert-error">
 				<?php
 					if ($_GET['error'] === 'username_taken') {
 						echo "This username is already taken. Please choose another one.";
@@ -23,7 +23,7 @@
 		<?php endif; ?>
 
 		<?php if (isset($_GET['success'])): ?>
-			<div style="color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+			<div class="alert-success">
 				<?php
 					if ($_GET['success'] === 'profile_updated') {
 						echo "Your profile information has been successfully updated.";
@@ -100,8 +100,6 @@
 			</div>
 			<button type="button" id="button-password">CHANGE MY PASSWORD</button>
 
-
-
 		</form>
 	</div>
 </div>
@@ -119,10 +117,15 @@
 	updateButton.addEventListener('click', function(event) {
 
 		if (username.disabled === true) {
+			// Prevent immediate form submission on the first click
 			event.preventDefault();
+			
+			// Enable fields for editing
 			username.disabled = false;
 			email.disabled = false;
 			checkboxNotification.disabled = false;
+			
+			// Update button appearance
 			updateButton.innerHTML = "SAVE CHANGES";
 			updateButton.setAttribute('type', 'submit');
 		}
@@ -131,17 +134,13 @@
 	passwordButton.addEventListener('click', function(event) {
 		if (password.disabled === true) {
 			event.preventDefault();
+			
 			password.disabled = false;
 			passwordConfirm.style.display = 'block';
-	
 			passwordButton.innerHTML = "SAVE PASSWORD";
 			passwordButton.setAttribute('type', 'submit');
 
 		}
 	})
-
-
-
-
 
 </script>
