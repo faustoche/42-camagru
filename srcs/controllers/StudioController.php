@@ -46,9 +46,10 @@ class StudioController {
 	 *  base64 webcam capture and merges it with the selected stickers via GD
 	 */
 	public function processCapture() {
-
+		ob_start();
 		Auth::requireLogin();
 		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			ob_clean();
 			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
 			exit();
 		}
@@ -60,6 +61,7 @@ class StudioController {
 			$stickersJson = $_POST['stickers_data'];
 
 			if (empty($imageData)) {
+				ob_clean();
 				echo json_encode(['status' => 'error', 'message' => 'Image data is missing']);
 				exit();
 			}
@@ -75,6 +77,7 @@ class StudioController {
 			$baseImage = imagecreatefromstring($result);
 			if ($baseImage === false) {
 				header('Content-Type: application/json');
+				ob_clean();
 				echo json_encode(['status' => 'error', 'message' => 'Invalid image format.']);
 				exit();
 			}
@@ -192,6 +195,9 @@ class StudioController {
 
 			// Save the composed image to the server as a PNG
 			$isSaved = imagepng($baseImage, $imagePath);
+			error_log("isSaved: " . var_export($isSaved, true));
+			error_log("imagePath: " . $imagePath);
+			error_log("baseImage: " . var_export($baseImage, true));
 
 			$user = new Users();
 			$user_id = $_SESSION['user_id'];
@@ -203,12 +209,14 @@ class StudioController {
 
 			$baseImage = null;
 			
+			ob_clean();
 			$response = ['status' => 'success', 'saved' => $isSaved, 'fileName' => $imageName];
 			header('Content-Type: application/json');
 			echo json_encode($response);
 			exit();
 		}
 
+		ob_clean();
 		echo json_encode(['status' => 'error', 'message' => 'Missing data']);
 		exit();
 	}

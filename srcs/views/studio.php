@@ -519,6 +519,14 @@
 	const upload = document.querySelector('input[name="userfile"]');
 	upload.addEventListener('change', function() {
 		if (this.files[0]) {
+
+			const maxSizeInBytes = 10 * 1024 * 1024;
+			if (this.files[0].size > maxSizeInBytes) {
+				alert("Image is too big! Max 10MB.");
+				this.value = '';
+				return ;
+			}
+
 			const reader = new FileReader();
 			reader.onload = () => {
 				
@@ -844,8 +852,15 @@
 				method: "POST",
 				body: new FormData(form)
 			})
-			.then(response => response.json())
+			.then(response => {
+				if (response.status === 413) {
+					alert("Image too big! Max 10MB.");
+					return;
+				}
+				return response.json();
+			})
 			.then(data => {
+				if (!data) return;
 				// clean after capture
 				allStickers.forEach(box => box.remove());
 				activeFilterImage.src = '';
