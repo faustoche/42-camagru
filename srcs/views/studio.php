@@ -593,11 +593,12 @@
 			newBox.style.zIndex = '10';
 
 			// center on screen
-			let tX = canvasPlaceholder.clientWidth / 2 - 60; 
-			let tY = canvasPlaceholder.clientHeight / 2 - 60;
 			let angle = 0;
 			let scale = 1;
+			let tX = canvasPlaceholder.clientWidth / 2 - 60; 
+			let tY = canvasPlaceholder.clientHeight / 2 - 60;
 
+			newBox.style.visibility = 'hidden';
 			newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
 			newBox.dataset.angle = angle; // need to store angle in HTML for backend processing
 
@@ -625,8 +626,10 @@
 				const ratio = newImg.naturalWidth / newImg.naturalHeight;
 				newBox.style.width = '120px';
 				newBox.style.height = (120 / ratio) + 'px';
+				tX = canvasPlaceholder.clientWidth / 2 - 60;
 				tY = canvasPlaceholder.clientHeight / 2 - (120 / ratio) / 2;
 				newBox.style.transform = `translate(${tX}px, ${tY}px) rotate(${angle}deg) scale(${scale})`;
+				newBox.style.visibility = 'visible';
 			};
 
 			// mouse event
