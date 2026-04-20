@@ -19,6 +19,7 @@ services:
       - ENABLE_BONUS=${ENABLE_BONUS:-0}
     depends_on:
       - db
+    command: sh -c "mkdir -p /var/www/html/public/uploads && chmod 777 /var/www/html/public/uploads && php-fpm"
 
   db:
     image: mariadb:11

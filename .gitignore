@@ -1,3 +1,5 @@
 .env
 
-srcs/uploads/
+srcs/public/uploads/
+
+data/*

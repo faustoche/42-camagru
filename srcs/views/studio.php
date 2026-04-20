@@ -520,9 +520,9 @@
 	upload.addEventListener('change', function() {
 		if (this.files[0]) {
 
-			const maxSizeInBytes = 10 * 1024 * 1024;
+			const maxSizeInBytes = 20 * 1024 * 1024;
 			if (this.files[0].size > maxSizeInBytes) {
-				alert("Image is too big! Max 10MB.");
+				alert("Image is too big! Max 20MB.");
 				this.value = '';
 				return ;
 			}
@@ -761,8 +761,19 @@
 			clearInterval(intervalId);
 			countdownOverlay.style.display = 'none';
 			
-			canvas.width = realWidth;
-			canvas.height = realHeight;
+			const MAX_WIDTH = 1080;
+            let exportWidth = realWidth;
+            let exportHeight = realHeight;
+            
+            // Reducing dimensions before exporting
+            if (exportWidth > MAX_WIDTH) {
+                const ratio = MAX_WIDTH / exportWidth;
+                exportWidth = MAX_WIDTH;
+                exportHeight = realHeight * ratio;
+            }
+
+			canvas.width = exportWidth;
+			canvas.height = exportHeight;
 
 			context.save();
 
@@ -810,8 +821,8 @@
 				renderedTop = activeRect.top;
 			}
 
-			const widthRatio = realWidth / renderedWidth;
-			const heightRatio = realHeight / renderedHeight;
+			const widthRatio = exportWidth / renderedWidth;
+			const heightRatio = exportHeight / renderedHeight;
 			
 			// Collect metadata for all positioned stickers
 			let stickersArray = [];
@@ -852,13 +863,7 @@
 				method: "POST",
 				body: new FormData(form)
 			})
-			.then(response => {
-				if (response.status === 413) {
-					alert("Image too big! Max 10MB.");
-					return;
-				}
-				return response.json();
-			})
+			.then(response => response.json())
 			.then(data => {
 				if (!data) return;
 				// clean after capture
